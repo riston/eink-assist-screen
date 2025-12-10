@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(npm start)",
+      "Bash(curl:*)",
+      "Bash(jq:*)",
+      "Bash(npm test)",
+      "Bash(npx puppeteer browsers install chrome)",
+      "Bash(cat:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
