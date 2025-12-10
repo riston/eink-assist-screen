@@ -71,6 +71,18 @@ export function createImageRequestHandler(browserManager: BrowserManager) {
     return;
   }
 
+  const threshold = params.threshold ? parseInt(params.threshold) : 128;
+  if (threshold < 0 || threshold > 255) {
+    res.writeHead(400, { "Content-Type": "application/json" });
+    res.end(
+      JSON.stringify({
+        error: "Invalid threshold parameter",
+        message: "Threshold must be between 0 and 255",
+      })
+    );
+    return;
+  }
+
   try {
     const browser = await browserManager.getBrowser();
     const page = await browser.newPage();
@@ -85,58 +97,40 @@ export function createImageRequestHandler(browserManager: BrowserManager) {
       let finalImage: Buffer | Uint8Array;
 
       if (format === "bmp") {
-        // For BMP, take PNG screenshot and convert to 1-bit monochrome
+        // For BMP, take PNG screenshot and convert to monochrome
         const pngScreenshot = await page.screenshot({
           type: "png",
           fullPage: false,
         });
 
-      // Convert PNG to monochrome using jimp
-      const image = await Jimp.read(Buffer.from(pngScreenshot));
+        // Read PNG and apply monochrome conversion
+        const image = await Jimp.read(Buffer.from(pngScreenshot));
 
-      // Convert to grayscale and apply dithering for monochrome
-      image.greyscale();
-      image.dither();
+        // Apply threshold to convert to monochrome
+        const { width, height, data } = image.bitmap;
 
-      const imageWidth = image.bitmap.width;
-      const imageHeight = image.bitmap.height;
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            const idx = (y * width + x) * 4;
+            const r = data[idx] ?? 0;
+            const g = data[idx + 1] ?? 0;
+            const b = data[idx + 2] ?? 0;
 
-      // Convert to 1-bit bitmap data
-      // Each row must be padded to a multiple of 4 bytes
-      const bytesPerRow = Math.ceil(imageWidth / 8);
-      const paddedBytesPerRow = Math.ceil(bytesPerRow / 4) * 4;
-      const bitmapData = Buffer.alloc(paddedBytesPerRow * imageHeight);
+            // Calculate luminance
+            const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
 
-      for (let y = 0; y < imageHeight; y++) {
-        for (let x = 0; x < imageWidth; x++) {
-          const idx = (y * imageWidth + x) * 4;
-          const grayscale = image.bitmap.data[idx] ?? 0; // Red channel (same as green/blue in grayscale)
+            // Apply threshold
+            const value = luminance >= threshold ? 255 : 0;
 
-          // Threshold at 128 to determine black or white
-          const bit = grayscale < 128 ? 1 : 0;
-
-          const byteIndex = y * paddedBytesPerRow + Math.floor(x / 8);
-          const bitPosition = 7 - (x % 8);
-
-          if (bit && bitmapData[byteIndex] !== undefined) {
-            bitmapData[byteIndex] |= (1 << bitPosition);
+            // Set all RGB channels to same value (grayscale)
+            data[idx] = value;
+            data[idx + 1] = value;
+            data[idx + 2] = value;
           }
         }
-      }
 
-      // Encode as 1-bit BMP with 2-color palette
-      const bmpEncoder = encodeBmp({
-        width: imageWidth,
-        height: imageHeight,
-        data: bitmapData,
-        bitPP: 1,
-        palette: [
-          { red: 255, green: 255, blue: 255, quad: 0 }, // White
-          { red: 0, green: 0, blue: 0, quad: 0 },       // Black
-        ],
-      });
-
-        finalImage = bmpEncoder.data;
+        // Use Jimp's built-in BMP export
+        finalImage = await image.getBuffer("image/bmp");
       } else {
         // For other formats, use Puppeteer's native support
         const screenshotOptions: {
