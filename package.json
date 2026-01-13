@@ -12,12 +12,16 @@
   "author": "",
   "description": "",
   "devDependencies": {
+    "@types/dotenv": "^6.1.1",
+    "@types/handlebars": "^4.0.40",
     "@types/node": "^24.10.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.15"
   },
   "dependencies": {
     "bmp-ts": "^1.0.9",
+    "dotenv": "^17.2.3",
+    "handlebars": "^4.7.8",
     "jimp": "^1.6.0",
     "puppeteer": "^24.32.0"
   }

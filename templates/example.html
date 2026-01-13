@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=800, initial-scale=1.0">
+  <title>Weather Display — Atelier</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Georgia', 'Times New Roman', serif;
+      width: 800px;
+      height: 600px;
+      background: white;
+      color: black;
+      overflow: hidden;
+      text-rendering: geometricPrecision;
+      -webkit-font-smoothing: none;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ASYMMETRIC MODERN LAYOUT */
+    .display {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-columns: 460px 1fr;
+      grid-template-rows: auto 1fr;
+    }
+
+    /* LEFT COLUMN HEADER */
+    .header-left {
+      grid-column: 1;
+      grid-row: 1;
+      padding: 24px 32px;
+      border-right: 3px solid black;
+      border-bottom: 3px solid black;
+      background: white;
+    }
+
+    .brand {
+      font-size: 11px;
+      font-weight: 400;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 6px;
+      font-family: 'Courier New', monospace;
+    }
+
+    .current-time {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      font-family: 'Courier New', monospace;
+    }
+
+    /* RIGHT COLUMN HEADER */
+    .header-right {
+      grid-column: 2;
+      grid-row: 1;
+      padding: 24px 28px;
+      border-bottom: 3px solid black;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: white;
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      font-family: 'Courier New', monospace;
+      padding: 8px 12px;
+      border: 1px solid black;
+    }
+
+    .status-label {
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 9px;
+    }
+
+    .status-value {
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .status-row.alert {
+      background: black;
+      color: white;
+      border: 3px solid black;
+    }
+
+    /* MAIN HERO - LEFT COLUMN */
+    .hero-main {
+      grid-column: 1;
+      grid-row: 2;
+      padding: 40px 32px;
+      border-right: 3px solid black;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: white;
+    }
+
+    .temperature-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .temperature-massive {
+      font-size: 160px;
+      font-weight: 700;
+      line-height: 0.85;
+      letter-spacing: -8px;
+      font-family: Georgia, serif;
+      margin-bottom: 12px;
+    }
+
+    .degree-symbol {
+      font-size: 80px;
+      vertical-align: top;
+      margin-left: -12px;
+    }
+
+    .condition-text {
+      font-size: 28px;
+      font-weight: 400;
+      font-style: italic;
+      letter-spacing: 0.5px;
+      margin-bottom: 20px;
+      opacity: 0.9;
+    }
+
+    .weather-details-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: auto;
+      padding-top: 24px;
+      border-top: 2px solid black;
+    }
+
+    .detail-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .detail-label {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      font-family: 'Courier New', monospace;
+    }
+
+    .detail-value {
+      font-size: 22px;
+      font-weight: 700;
+      font-family: Georgia, serif;
+    }
+
+    .detail-unit {
+      font-size: 14px;
+      opacity: 0.7;
+      font-weight: 400;
+    }
+
+    /* SIDEBAR - RIGHT COLUMN */
+    .sidebar {
+      grid-column: 2;
+      grid-row: 2;
+      display: flex;
+      flex-direction: column;
+      background: white;
+    }
+
+    /* Indoor Sensors */
+    .sensors-block {
+      padding: 28px;
+      border-bottom: 3px solid black;
+    }
+
+    .sensors-title {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 18px;
+      font-family: 'Courier New', monospace;
+    }
+
+    .sensor-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 14px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+    }
+
+    .sensor-item:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .sensor-name {
+      font-size: 11px;
+      font-weight: 400;
+      font-family: Georgia, serif;
+    }
+
+    .sensor-reading {
+      font-size: 20px;
+      font-weight: 700;
+      font-family: Georgia, serif;
+    }
+
+    .sensor-unit {
+      font-size: 12px;
+      opacity: 0.6;
+      margin-left: 2px;
+    }
+
+    /* Forecast Block */
+    .forecast-block {
+      flex: 1;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .forecast-title {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 18px;
+      font-family: 'Courier New', monospace;
+    }
+
+    .forecast-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .forecast-day {
+      display: grid;
+      grid-template-columns: 60px 30px 1fr auto;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+    }
+
+    .forecast-day.today {
+      background: black;
+      color: white;
+      padding: 14px;
+      margin: -4px -14px 0 -14px;
+      border-bottom: none;
+      margin-bottom: 8px;
+    }
+
+    .forecast-day:last-child {
+      border-bottom: none;
+    }
+
+    .forecast-day-name {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-family: 'Courier New', monospace;
+    }
+
+    .forecast-icon {
+      font-size: 20px;
+      text-align: center;
+    }
+
+    .forecast-temp {
+      font-size: 18px;
+      font-weight: 700;
+      font-family: Georgia, serif;
+      text-align: right;
+    }
+
+    .forecast-meta {
+      font-size: 9px;
+      font-family: 'Courier New', monospace;
+      opacity: 0.7;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    /* Note for missing forecast data */
+    .forecast-note {
+      margin-top: 16px;
+      padding: 12px;
+      border: 1px dashed rgba(0, 0, 0, 0.3);
+      font-size: 9px;
+      font-family: 'Courier New', monospace;
+      text-align: center;
+      opacity: 0.6;
+    }
+
+    /* Decorative elements */
+    .corner-mark {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border: 2px solid black;
+    }
+
+    .corner-mark.top-left {
+      top: 8px;
+      left: 8px;
+      border-right: none;
+      border-bottom: none;
+    }
+
+    .corner-mark.bottom-right {
+      bottom: 8px;
+      right: 8px;
+      border-left: none;
+      border-top: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="display">
+    <!-- Left Header -->
+    <div class="header-left">
+      <div class="brand">Atelier Weather</div>
+      <div class="current-time">{{now}}</div>
+    </div>
+
+    <!-- Right Header -->
+    <div class="header-right">
+      {{#if entities.sensor_temperature_humidity_sensor_6e74_temperature}}
+      <div class="status-row">
+        <span class="status-label">Indoor</span>
+        <span class="status-value">{{round entities.sensor_temperature_humidity_sensor_6e74_temperature.state}}°C</span>
+      </div>
+      {{/if}}
+
+      {{#if entities.binary_sensor_door}}
+      <div class="status-row {{#if entities.binary_sensor_door.state_is_on}}alert{{/if}}">
+        <span class="status-label">Door Status</span>
+        <span class="status-value">{{#if entities.binary_sensor_door.state_is_on}}OPEN{{else}}CLOSED{{/if}}</span>
+      </div>
+      {{/if}}
+    </div>
+
+    <!-- Main Hero Section (Left Column) -->
+    {{#if entities.sensor_weather_forecast}}
+    <div class="hero-main">
+      <div class="temperature-section">
+        <div class="temperature-massive">
+          {{round entities.sensor_weather_forecast.attributes.temperature}}<span class="degree-symbol">°</span>
+        </div>
+        <div class="condition-text">{{entities.sensor_weather_forecast.attributes.condition}}</div>
+      </div>
+
+      <div class="weather-details-grid">
+        <div class="detail-item">
+          <div class="detail-label">Wind Speed</div>
+          <div class="detail-value">{{entities.sensor_weather_forecast.attributes.wind_speed}}<span class="detail-unit">km/h</span></div>
+        </div>
+
+        <div class="detail-item">
+          <div class="detail-label">Precipitation</div>
+          <div class="detail-value">{{entities.sensor_weather_forecast.attributes.precipitation}}<span class="detail-unit">mm</span></div>
+        </div>
+
+        {{#if entities.sensor_weather_forecast.attributes.humidity}}
+        <div class="detail-item">
+          <div class="detail-label">Humidity</div>
+          <div class="detail-value">{{entities.sensor_weather_forecast.attributes.humidity}}<span class="detail-unit">%</span></div>
+        </div>
+        {{/if}}
+
+        {{#if entities.sensor_weather_forecast.attributes.pressure}}
+        <div class="detail-item">
+          <div class="detail-label">Pressure</div>
+          <div class="detail-value">{{entities.sensor_weather_forecast.attributes.pressure}}<span class="detail-unit">hPa</span></div>
+        </div>
+        {{/if}}
+      </div>
+    </div>
+    {{/if}}
+
+    <!-- Sidebar (Right Column) -->
+    <div class="sidebar">
+      <!-- Indoor Sensors Block -->
+      <div class="sensors-block">
+        <div class="sensors-title">Indoor Climate</div>
+
+        {{#if entities.sensor_temperature_humidity_sensor_6e74_temperature}}
+        <div class="sensor-item">
+          <div class="sensor-name">Temperature</div>
+          <div class="sensor-reading">{{round entities.sensor_temperature_humidity_sensor_6e74_temperature.state}}<span class="sensor-unit">°C</span></div>
+        </div>
+        {{/if}}
+
+        {{#if entities.sensor_temperature_humidity_sensor_6e74_humidity}}
+        <div class="sensor-item">
+          <div class="sensor-name">Humidity</div>
+          <div class="sensor-reading">{{entities.sensor_temperature_humidity_sensor_6e74_humidity.state}}<span class="sensor-unit">%</span></div>
+        </div>
+        {{/if}}
+      </div>
+
+      <!-- Forecast Block -->
+      {{#if entities.sensor_weather_forecast}}
+      <div class="forecast-block">
+        <div class="forecast-title">Weather Outlook</div>
+
+        <div class="forecast-list">
+          <!-- Today -->
+          <div class="forecast-day today">
+            <div class="forecast-day-name">TODAY</div>
+            <div class="forecast-icon">●</div>
+            <div class="forecast-temp">{{round entities.sensor_weather_forecast.attributes.temperature}}°</div>
+            <div class="forecast-meta">
+              {{#if entities.sensor_weather_forecast.attributes.wind_speed}}
+              Wind {{entities.sensor_weather_forecast.attributes.wind_speed}}
+              {{/if}}
+            </div>
+          </div>
+
+          <!-- Tomorrow (Day +1) -->
+          {{#if entities.sensor_weather_forecast.attributes.temperature_1}}
+          <div class="forecast-day">
+            <div class="forecast-day-name">TOMORROW</div>
+            <div class="forecast-icon">◐</div>
+            <div class="forecast-temp">{{round entities.sensor_weather_forecast.attributes.temperature_1}}°</div>
+            <div class="forecast-meta">
+              {{#if entities.sensor_weather_forecast.attributes.precipitation_probability_1}}
+              {{round entities.sensor_weather_forecast.attributes.precipitation_probability_1}}% rain
+              {{else}}
+              Wind {{entities.sensor_weather_forecast.attributes.wind_speed_1}}
+              {{/if}}
+            </div>
+          </div>
+          {{/if}}
+
+          <!-- Day +2 -->
+          {{#if entities.sensor_weather_forecast.attributes.temperature_2}}
+          <div class="forecast-day">
+            <div class="forecast-day-name">+2 DAYS</div>
+            <div class="forecast-icon">○</div>
+            <div class="forecast-temp">{{round entities.sensor_weather_forecast.attributes.temperature_2}}°</div>
+            <div class="forecast-meta">
+              {{#if entities.sensor_weather_forecast.attributes.precipitation_probability_2}}
+              {{round entities.sensor_weather_forecast.attributes.precipitation_probability_2}}% rain
+              {{else}}
+              Wind {{entities.sensor_weather_forecast.attributes.wind_speed_2}}
+              {{/if}}
+            </div>
+          </div>
+          {{/if}}
+
+          <!-- Day +3 -->
+          {{#if entities.sensor_weather_forecast.attributes.temperature_3}}
+          <div class="forecast-day">
+            <div class="forecast-day-name">+3 DAYS</div>
+            <div class="forecast-icon">◑</div>
+            <div class="forecast-temp">{{round entities.sensor_weather_forecast.attributes.temperature_3}}°</div>
+            <div class="forecast-meta">
+              {{#if entities.sensor_weather_forecast.attributes.precipitation_probability_3}}
+              {{round entities.sensor_weather_forecast.attributes.precipitation_probability_3}}% rain
+              {{else}}
+              Wind {{entities.sensor_weather_forecast.attributes.wind_speed_3}}
+              {{/if}}
+            </div>
+          </div>
+          {{/if}}
+
+          <!-- Day +4 -->
+          {{#if entities.sensor_weather_forecast.attributes.temperature_4}}
+          <div class="forecast-day">
+            <div class="forecast-day-name">+4 DAYS</div>
+            <div class="forecast-icon">●</div>
+            <div class="forecast-temp">{{round entities.sensor_weather_forecast.attributes.temperature_4}}°</div>
+            <div class="forecast-meta">
+              {{#if entities.sensor_weather_forecast.attributes.precipitation_probability_4}}
+              {{round entities.sensor_weather_forecast.attributes.precipitation_probability_4}}% rain
+              {{else}}
+              Wind {{entities.sensor_weather_forecast.attributes.wind_speed_4}}
+              {{/if}}
+            </div>
+          </div>
+          {{/if}}
+        </div>
+
+        <!-- Note if limited forecast data -->
+        {{#unless entities.sensor_weather_forecast.attributes.temperature_2}}
+        <div class="forecast-note">
+          Limited forecast data available from weather provider
+        </div>
+        {{/unless}}
+      </div>
+      {{/if}}
+    </div>
+  </div>
+</body>
+
+</html>

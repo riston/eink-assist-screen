@@ -7,7 +7,22 @@
       "Bash(jq:*)",
       "Bash(npm test)",
       "Bash(npx puppeteer browsers install chrome)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(npx tsc:*)",
+      "Bash(xxd:*)",
+      "Bash(head -5 echo \"\" echo \"Second chunk (offset=20, limit=20):\")",
+      "Bash(pkill:*)",
+      "Bash(npm run:*)",
+      "Bash(npm install:*)",
+      "Bash(npm test:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)",
+      "Bash(node test-entity-extraction.js:*)",
+      "Bash(node test-fixed.js:*)",
+      "Skill(frontend-design:frontend-design)",
+      "Skill(frontend-design)",
+      "Bash(tree:*)",
+      "Bash(git mv:*)"
     ],
     "deny": [],
     "ask": []
