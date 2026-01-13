@@ -8,3 +8,12 @@ import "./env.js";
 // Export config functions and types
 export { loadConfig, getConfig, clearConfig } from "./config.js";
 export type { HAConfig } from "./config.js";
+
+// Export entity mappings
+export {
+  loadEntityMappings,
+  getEntityMappings,
+  resolveEntityId,
+  clearEntityMappings,
+} from "./entity-mappings.js";
+export type { EntityMappingsConfig } from "./entity-mappings.js";

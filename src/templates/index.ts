@@ -8,4 +8,4 @@ export {
   listTemplates,
   getTemplatesDir,
 } from "./storage.js";
-export { extractEntityIds, renderTemplate } from "./engine.js";
+export { extractEntityIds, extractCalendarIds, renderTemplate } from "./engine.js";

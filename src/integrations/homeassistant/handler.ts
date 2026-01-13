@@ -1,7 +1,8 @@
 import { IncomingMessage, ServerResponse } from "node:http";
 import { loadTemplate, templateExists, listTemplates } from "../../templates/index.js";
-import { extractEntityIds, renderTemplate } from "../../templates/index.js";
-import { getMultipleStates } from "./client.js";
+import { extractEntityIds, extractCalendarIds, renderTemplate } from "../../templates/index.js";
+import { getMultipleStates, getCalendarEvents } from "./client.js";
+import type { CalendarEvent } from "./types.js";
 import * as renderedCache from "../../core/cache/index.js";
 import { getConfig } from "../../config/index.js";
 
@@ -18,6 +19,39 @@ interface ErrorResult {
   error: string;
   message: string;
   details?: any;
+}
+
+/**
+ * Fetch multiple calendars in parallel
+ * @param calendarIds Array of calendar entity IDs with config
+ * @returns Record of calendar events by normalized calendar ID
+ */
+async function getMultipleCalendars(
+  calendarIds: Array<{ id: string; daysAhead: number; limit: number }>
+): Promise<Record<string, CalendarEvent[]>> {
+  const now = new Date();
+
+  const promises = calendarIds.map(async ({ id, daysAhead, limit }) => {
+    const start = now.toISOString();
+    const end = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000).toISOString();
+
+    const events = await getCalendarEvents(id, start, end);
+    const normalizedKey = id.replace(/\./g, "_");
+
+    return {
+      key: normalizedKey,
+      events: events.slice(0, limit), // Limit to N events
+    };
+  });
+
+  const results = await Promise.all(promises);
+
+  const record: Record<string, CalendarEvent[]> = {};
+  for (const { key, events } of results) {
+    record[key] = events;
+  }
+
+  return record;
 }
 
 /**
@@ -68,6 +102,7 @@ export async function handleRender(
     if (!forceRefresh && renderedCache.has(cacheKey)) {
       const cachedHtml = renderedCache.get(cacheKey);
       if (cachedHtml) {
+        console.log(`[Calendar] Serving from cache: ${cacheKey}`);
         const result: RenderResult = {
           success: true,
           template: templateName,
@@ -82,14 +117,24 @@ export async function handleRender(
       }
     }
 
+    console.log(`[Calendar] Cache miss or force refresh, fetching fresh data`);
+
     // Load template from disk
     const templateHtml = await loadTemplate(templateName);
 
     // Extract entity IDs from template
     const entityIds = extractEntityIds(templateHtml);
 
-    // Fetch entity states from Home Assistant
-    const entities = await getMultipleStates(entityIds);
+    // Extract calendar IDs from template
+    const calendarIds = extractCalendarIds(templateHtml);
+
+    // Fetch entity states and calendar events from Home Assistant in parallel
+    const [entities, calendars] = await Promise.all([
+      getMultipleStates(entityIds),
+      calendarIds.length > 0
+        ? getMultipleCalendars(calendarIds)
+        : Promise.resolve({} as Record<string, CalendarEvent[]>),
+    ]);
 
     // Check for missing entities
     const missingEntities = Object.entries(entities)
@@ -100,8 +145,17 @@ export async function handleRender(
       console.warn(`Warning: Missing entities in Home Assistant: ${missingEntities.join(", ")}`);
     }
 
-    // Render template with entity data
-    const renderedHtml = renderTemplate(templateHtml, entities);
+    // Check for calendars with no events
+    const emptyCalendars = Object.entries(calendars)
+      .filter(([_, events]) => events.length === 0)
+      .map(([id, _]) => id);
+
+    if (emptyCalendars.length > 0) {
+      console.warn(`Warning: No upcoming events for calendars: ${emptyCalendars.join(", ")}`);
+    }
+
+    // Render template with entity data and calendar data
+    const renderedHtml = renderTemplate(templateHtml, entities, calendars);
 
     // Store in cache
     renderedCache.set(cacheKey, renderedHtml, cacheTtl, {

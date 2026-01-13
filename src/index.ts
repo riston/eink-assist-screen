@@ -1,5 +1,5 @@
 import { createServer } from "./server/index.js";
-import { loadConfig } from "./config/index.js";
+import { loadConfig, loadEntityMappings } from "./config/index.js";
 import { getTemplatesDir, listTemplates } from "./templates/index.js";
 import { mkdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
@@ -14,6 +14,10 @@ async function initializeHA() {
     console.log(`  URL: ${config.homeAssistantUrl}`);
     console.log(`  Cache TTL: ${config.cacheTtlDefault}s`);
     console.log(`  Cache Max Size: ${config.cacheMaxSize}`);
+
+    // Load entity mappings
+    await loadEntityMappings();
+    console.log("✓ Entity mappings loaded");
 
     // Create templates directory if it doesn't exist
     const templatesDir = getTemplatesDir();

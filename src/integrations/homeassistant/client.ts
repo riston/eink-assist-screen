@@ -1,9 +1,9 @@
 import { request as httpsRequest } from "node:https";
 import { request as httpRequest } from "node:http";
 import { getConfig } from "../../config/index.js";
-import type { EntityState } from "./types.js";
+import type { EntityState, CalendarEvent } from "./types.js";
 
-export type { EntityState };
+export type { EntityState, CalendarEvent };
 
 /**
  * Fetch a single entity state from Home Assistant
@@ -48,6 +48,45 @@ export async function getMultipleStates(
   }
 
   return record;
+}
+
+/**
+ * Fetch calendar events from Home Assistant
+ * @param entityId Calendar entity ID (e.g., "calendar.risto_kalender")
+ * @param start ISO datetime string for start of range
+ * @param end ISO datetime string for end of range
+ * @returns Array of calendar events
+ */
+export async function getCalendarEvents(
+  entityId: string,
+  start: string,
+  end: string
+): Promise<CalendarEvent[]> {
+  const config = getConfig();
+
+  // Use the full entity ID (including calendar. prefix) for the API call
+  const url = `${config.homeAssistantUrl}/api/calendars/${entityId}?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`;
+
+  console.log(`[Calendar] Fetching ${entityId} from ${start} to ${end}`);
+
+  try {
+    const response = await makeRequest(url, config.accessToken);
+    const events = response as CalendarEvent[];
+    console.log(`[Calendar] API returned ${events.length} events for ${entityId}`);
+    if (events.length > 0) {
+      const firstEvent = events[0];
+      const eventTime = firstEvent?.start?.dateTime || firstEvent?.start?.date || 'unknown';
+      console.log(`[Calendar] First event: "${firstEvent?.summary}" at ${eventTime}`);
+    }
+    return events;
+  } catch (error) {
+    if ((error as any).statusCode === 404) {
+      console.log(`[Calendar] Calendar not found: ${entityId}`);
+      return []; // Calendar not found
+    }
+    console.error(`[Calendar] Error fetching ${entityId}:`, error);
+    throw error;
+  }
 }
 
 /**

@@ -8,3 +8,15 @@ export interface EntityState {
   last_changed: string;
   last_updated: string;
 }
+
+/**
+ * Home Assistant calendar event interface
+ */
+export interface CalendarEvent {
+  start: { dateTime?: string; date?: string };
+  end: { dateTime?: string; date?: string };
+  summary: string;
+  description?: string;
+  location?: string;
+  uid: string;
+}
