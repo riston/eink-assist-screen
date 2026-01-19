@@ -3,7 +3,7 @@ import { URL } from "url";
 
 import { createBrowserManager, createImageRequestHandler } from "../rendering/index.js";
 import { BASE_HOST, BASE_PORT, ACTIVE_TEMPLATE_ID } from "../core/constants.js";
-import { handleRender } from "../integrations/homeassistant/index.js";
+import { handleRender, handleEntities } from "../integrations/homeassistant/index.js";
 
 export function createServer() {
   const browserManager = createBrowserManager();
@@ -56,6 +56,19 @@ export function createServer() {
       } else if (url.pathname === "/ha/render") {
         handleRender(req, res).catch((error: unknown) => {
           console.error("Unhandled error in /ha/render handler:", error);
+          if (!res.headersSent) {
+            res.writeHead(500, { "Content-Type": "application/json" });
+            res.end(
+              JSON.stringify({
+                error: "Internal server error",
+                message: error instanceof Error ? error.message : String(error),
+              })
+            );
+          }
+        });
+      } else if (url.pathname === "/ha/entities") {
+        handleEntities(req, res).catch((error: unknown) => {
+          console.error("Unhandled error in /ha/entities handler:", error);
           if (!res.headersSent) {
             res.writeHead(500, { "Content-Type": "application/json" });
             res.end(

@@ -85,7 +85,9 @@ function registerHelpers() {
     const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const weekday = weekdays[date.getDay()];
 
-    if (format === "MMM DD") {
+    if (format === "ddd") {
+      return weekday;
+    } else if (format === "MMM DD") {
       return `${month} ${day}`;
     } else if (format === "ddd MMM DD") {
       return `${weekday} ${month} ${day}`;
@@ -135,6 +137,29 @@ function registerHelpers() {
   Handlebars.registerHelper("capitalize", function (str: string) {
     if (!str) return "";
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  });
+
+  // Format weather condition (e.g., "partlycloudy" -> "Partly Cloudy")
+  Handlebars.registerHelper("weatherCondition", function (condition: string) {
+    if (!condition) return "";
+    const conditionMap: Record<string, string> = {
+      "clear-night": "Clear",
+      "cloudy": "Cloudy",
+      "fog": "Fog",
+      "hail": "Hail",
+      "lightning": "Lightning",
+      "lightning-rainy": "Thunderstorm",
+      "partlycloudy": "Partly Cloudy",
+      "pouring": "Pouring",
+      "rainy": "Rainy",
+      "snowy": "Snowy",
+      "snowy-rainy": "Sleet",
+      "sunny": "Sunny",
+      "windy": "Windy",
+      "windy-variant": "Windy",
+      "exceptional": "Exceptional",
+    };
+    return conditionMap[condition.toLowerCase()] || condition.charAt(0).toUpperCase() + condition.slice(1);
   });
 }
 
@@ -229,9 +254,17 @@ export function extractCalendarIds(templateHtml: string): Array<{
     // Try to resolve as semantic name
     let entityId = mappings[nameOrNormalizedId];
 
-    // Fallback: treat as normalized entity ID
+    // Fallback: treat as calendar entity ID
+    // If no mapping exists, assume it's a calendar entity with format calendar.name
     if (!entityId) {
-      entityId = nameOrNormalizedId.replace(/_/, ".");
+      // Check if it already looks like a normalized calendar ID (starts with calendar_)
+      if (nameOrNormalizedId.startsWith("calendar_")) {
+        // Convert calendar_xxx to calendar.xxx
+        entityId = "calendar." + nameOrNormalizedId.substring(9);
+      } else {
+        // Assume it's just the calendar name, prepend calendar. prefix
+        entityId = "calendar." + nameOrNormalizedId;
+      }
     }
 
     calendarIds.add(entityId);

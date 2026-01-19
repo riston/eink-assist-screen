@@ -4,9 +4,41 @@ import puppeteer, { Browser } from "puppeteer";
 import { Jimp } from "jimp";
 import * as renderedCache from "../core/cache/index.js";
 import { loadTemplate, templateExists } from "../templates/index.js";
-import { extractEntityIds, renderTemplate } from "../templates/index.js";
-import { getMultipleStates } from "../integrations/homeassistant/index.js";
+import { extractEntityIds, extractCalendarIds, renderTemplate } from "../templates/index.js";
+import { getMultipleStates, getCalendarEvents } from "../integrations/homeassistant/index.js";
+import type { CalendarEvent } from "../integrations/homeassistant/index.js";
 import { createBrowserManager, type BrowserManager } from "./browserManager.js";
+
+/**
+ * Fetch multiple calendars in parallel
+ */
+async function getMultipleCalendars(
+  calendarIds: Array<{ id: string; daysAhead: number; limit: number }>
+): Promise<Record<string, CalendarEvent[]>> {
+  const now = new Date();
+
+  const promises = calendarIds.map(async ({ id, daysAhead, limit }) => {
+    const start = now.toISOString();
+    const end = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000).toISOString();
+
+    const events = await getCalendarEvents(id, start, end);
+    const normalizedKey = id.replace(/\./g, "_");
+
+    return {
+      key: normalizedKey,
+      events: events.slice(0, limit),
+    };
+  });
+
+  const results = await Promise.all(promises);
+
+  const record: Record<string, CalendarEvent[]> = {};
+  for (const { key, events } of results) {
+    record[key] = events;
+  }
+
+  return record;
+}
 
 interface ValidationResult {
   valid: boolean;
@@ -180,8 +212,17 @@ export function createImageRequestHandler(browserManager: BrowserManager) {
           // Load and render template
           const templateHtml = await loadTemplate(templateName);
           const entityIds = extractEntityIds(templateHtml);
-          const entities = await getMultipleStates(entityIds);
-          html = renderTemplate(templateHtml, entities);
+          const calendarIds = extractCalendarIds(templateHtml);
+
+          // Fetch entity states and calendar events in parallel
+          const [entities, calendars] = await Promise.all([
+            getMultipleStates(entityIds),
+            calendarIds.length > 0
+              ? getMultipleCalendars(calendarIds)
+              : Promise.resolve({} as Record<string, CalendarEvent[]>),
+          ]);
+
+          html = renderTemplate(templateHtml, entities, calendars);
 
           // Cache it for future requests
           renderedCache.set(cacheKey, html, 300, {

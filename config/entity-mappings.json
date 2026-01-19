@@ -2,6 +2,7 @@
   "version": "1.0",
   "mappings": {
     "weather": "weather.forecast_ehte",
+    "weather_forecast": "sensor.weather_forecast",
     "sun": "sun.sun",
     "main_door": "binary_sensor.main_door_iaszone",
     "main_door_battery": "sensor.main_door_battery",

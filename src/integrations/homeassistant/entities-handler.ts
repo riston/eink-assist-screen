@@ -1,18 +1,18 @@
 import { IncomingMessage, ServerResponse } from "node:http";
 import { loadTemplate, templateExists, listTemplates } from "../../templates/index.js";
-import { extractEntityIds, extractCalendarIds, renderTemplate } from "../../templates/index.js";
+import { extractEntityIds, extractCalendarIds } from "../../templates/index.js";
 import { getMultipleStates, getCalendarEvents } from "./client.js";
+import { getEntityMappings } from "../../config/index.js";
 import type { CalendarEvent } from "./types.js";
-import * as renderedCache from "../../core/cache/index.js";
-import { getConfig } from "../../config/index.js";
 
-interface RenderResult {
+interface EntitiesResult {
   success: true;
   template: string;
-  entities_fetched: number;
-  html_length: number;
-  cached_at: string;
-  cache_key: string;
+  entities_count: number;
+  entities: Record<string, any>;
+  calendars_count: number;
+  calendars: Record<string, CalendarEvent[]>;
+  fetched_at: string;
 }
 
 interface ErrorResult {
@@ -40,7 +40,7 @@ async function getMultipleCalendars(
 
     return {
       key: normalizedKey,
-      events: events.slice(0, limit), // Limit to N events
+      events: events.slice(0, limit),
     };
   });
 
@@ -55,10 +55,45 @@ async function getMultipleCalendars(
 }
 
 /**
- * Handle /ha/render requests
- * Orchestrates: load template → extract entities → fetch HA data → render → cache
+ * Prepare calendar data with semantic name support
+ * Makes calendar data accessible via both normalized IDs and semantic names
  */
-export async function handleRender(
+function prepareCalendarData(
+  calendars: Record<string, CalendarEvent[]>
+): Record<string, CalendarEvent[]> {
+  const prepared: Record<string, CalendarEvent[]> = {};
+  const mappings = getEntityMappings();
+
+  // Create reverse mapping (normalized entity_id -> semantic names)
+  const reverseMap: Record<string, string[]> = {};
+  for (const [semantic, entityId] of Object.entries(mappings)) {
+    const normalized = entityId.replace(/\./g, "_");
+    if (!reverseMap[normalized]) {
+      reverseMap[normalized] = [];
+    }
+    reverseMap[normalized].push(semantic);
+  }
+
+  for (const [key, events] of Object.entries(calendars)) {
+    // Add under normalized calendar ID
+    prepared[key] = events;
+
+    // Also add under semantic names
+    if (reverseMap[key]) {
+      for (const semanticName of reverseMap[key]) {
+        prepared[semanticName] = events;
+      }
+    }
+  }
+
+  return prepared;
+}
+
+/**
+ * Handle /ha/entities requests
+ * Fetches entity data for a given template and returns it as JSON
+ */
+export async function handleEntities(
   req: IncomingMessage,
   res: ServerResponse
 ): Promise<void> {
@@ -74,7 +109,7 @@ export async function handleRender(
     if (!templateName) {
       sendError(res, 400, "missing_parameter", "Missing required parameter: template", {
         required: ["template"],
-        optional: ["cache_ttl", "force_refresh", "format"],
+        optional: [],
       });
       return;
     }
@@ -88,45 +123,7 @@ export async function handleRender(
       return;
     }
 
-    // Parse optional parameters
-    const config = getConfig();
-    const cacheTtl = params.cache_ttl
-      ? parseInt(params.cache_ttl, 10)
-      : config.cacheTtlDefault;
-    const forceRefresh = params.force_refresh === "true";
-    const format = params.format || "json"; // Default to JSON, support "html"
-
-    // Generate cache key
-    const cacheKey = `ha:${templateName}`;
-
-    // Check cache (unless force refresh)
-    if (!forceRefresh && renderedCache.has(cacheKey)) {
-      const cachedHtml = renderedCache.get(cacheKey);
-      if (cachedHtml) {
-        console.log(`[Calendar] Serving from cache: ${cacheKey}`);
-
-        // Return HTML directly if format=html
-        if (format === "html") {
-          res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-          res.end(cachedHtml);
-          return;
-        }
-
-        const result: RenderResult = {
-          success: true,
-          template: templateName,
-          entities_fetched: 0, // From cache
-          html_length: cachedHtml.length,
-          cached_at: new Date().toISOString(),
-          cache_key: cacheKey,
-        };
-
-        sendJson(res, 200, result);
-        return;
-      }
-    }
-
-    console.log(`[Calendar] Cache miss or force refresh, fetching fresh data`);
+    console.log(`[Entities] Fetching entities for template: ${templateName}`);
 
     // Load template from disk
     const templateHtml = await loadTemplate(templateName);
@@ -136,6 +133,8 @@ export async function handleRender(
 
     // Extract calendar IDs from template
     const calendarIds = extractCalendarIds(templateHtml);
+
+    console.log(`[Entities] Found ${entityIds.length} entities and ${calendarIds.length} calendars in template`);
 
     // Fetch entity states and calendar events from Home Assistant in parallel
     const [entities, calendars] = await Promise.all([
@@ -151,7 +150,7 @@ export async function handleRender(
       .map(([id, _]) => id);
 
     if (missingEntities.length > 0) {
-      console.warn(`Warning: Missing entities in Home Assistant: ${missingEntities.join(", ")}`);
+      console.warn(`[Entities] Missing entities: ${missingEntities.join(", ")}`);
     }
 
     // Check for calendars with no events
@@ -160,38 +159,26 @@ export async function handleRender(
       .map(([id, _]) => id);
 
     if (emptyCalendars.length > 0) {
-      console.warn(`Warning: No upcoming events for calendars: ${emptyCalendars.join(", ")}`);
+      console.warn(`[Entities] No upcoming events for calendars: ${emptyCalendars.join(", ")}`);
     }
 
-    // Render template with entity data and calendar data
-    const renderedHtml = renderTemplate(templateHtml, entities, calendars);
-
-    // Store in cache
-    renderedCache.set(cacheKey, renderedHtml, cacheTtl, {
-      templateName,
-      entitiesFetched: entityIds.length,
-    });
-
-    // Return HTML directly if format=html
-    if (format === "html") {
-      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-      res.end(renderedHtml);
-      return;
-    }
+    // Prepare calendar data with semantic name support
+    const preparedCalendars = prepareCalendarData(calendars);
 
     // Send response
-    const result: RenderResult = {
+    const result: EntitiesResult = {
       success: true,
       template: templateName,
-      entities_fetched: entityIds.length,
-      html_length: renderedHtml.length,
-      cached_at: new Date().toISOString(),
-      cache_key: cacheKey,
+      entities_count: entityIds.length,
+      entities: entities,
+      calendars_count: calendarIds.length,
+      calendars: preparedCalendars,
+      fetched_at: new Date().toISOString(),
     };
 
     sendJson(res, 200, result);
   } catch (error) {
-    console.error("Error in /ha/render handler:", error);
+    console.error("Error in /ha/entities handler:", error);
 
     const err = error as any;
 
@@ -202,8 +189,6 @@ export async function handleRender(
       sendError(res, 401, "ha_auth_failed", err.message, {
         hint: "Check access_token in addon configuration",
       });
-    } else if (err.message?.includes("Template rendering failed")) {
-      sendError(res, 500, "template_render_error", err.message);
     } else if (err.message?.includes("Failed to read template")) {
       sendError(res, 500, "template_read_error", err.message);
     } else {
