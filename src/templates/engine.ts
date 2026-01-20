@@ -1,6 +1,7 @@
 import Handlebars from "handlebars";
 import type { EntityState, CalendarEvent } from "../integrations/homeassistant/types.js";
 import { getEntityMappings } from "../config/index.js";
+import { loadWeatherIcons, getWeatherIcon, loadUiIcons, getUiIcon } from "./icons/index.js";
 
 // Register custom Handlebars helpers
 function registerHelpers() {
@@ -161,9 +162,24 @@ function registerHelpers() {
     };
     return conditionMap[condition.toLowerCase()] || condition.charAt(0).toUpperCase() + condition.slice(1);
   });
+
+  // Weather icon SVG helper - returns SVG markup for weather conditions
+  Handlebars.registerHelper("weatherIcon", function (condition: string | undefined) {
+    const svg = getWeatherIcon(condition);
+    return new Handlebars.SafeString(svg);
+  });
+
+  // UI icon SVG helper - returns SVG markup for UI icons
+  Handlebars.registerHelper("icon", function (name: string | undefined) {
+    const svg = getUiIcon(name);
+    return new Handlebars.SafeString(svg);
+  });
 }
 
-// Initialize helpers on module load
+
+// Initialize on module load
+loadWeatherIcons();
+loadUiIcons();
 registerHelpers();
 
 /**
