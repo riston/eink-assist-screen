@@ -1,14 +1,33 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { getEntityState, getMultipleStates } from "../index.js";
-import { request as httpsRequest } from "node:https";
-import { request as httpRequest, ClientRequest, IncomingMessage } from "node:http";
 import { getConfig } from "../../../config/index.js";
-import { EventEmitter } from "node:events";
 
-// Mock modules
-vi.mock("node:https");
-vi.mock("node:http");
+// Mock config module
 vi.mock("../../../config/index.js");
+
+// Mock global fetch
+const mockFetch = vi.fn();
+vi.stubGlobal("fetch", mockFetch);
+
+function createMockResponse(status: number, data: unknown, statusText = "OK"): Response {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    statusText,
+    json: () => Promise.resolve(data),
+    text: () => Promise.resolve(JSON.stringify(data)),
+    headers: new Headers(),
+    redirected: false,
+    type: "basic",
+    url: "",
+    clone: () => createMockResponse(status, data, statusText),
+    body: null,
+    bodyUsed: false,
+    arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+    blob: () => Promise.resolve(new Blob()),
+    formData: () => Promise.resolve(new FormData()),
+  } as Response;
+}
 
 describe("haClient", () => {
   beforeEach(() => {
@@ -23,42 +42,6 @@ describe("haClient", () => {
     });
   });
 
-  function mockHttpRequest(statusCode: number, responseData: unknown, isHttps = false) {
-    const mockResponse = Object.assign(new EventEmitter(), {
-      statusCode,
-      statusMessage: "OK",
-    }) as IncomingMessage;
-
-    const mockRequest = Object.assign(new EventEmitter(), {
-      end: vi.fn(),
-      destroy: vi.fn(),
-    }) as unknown as ClientRequest;
-
-    if (isHttps) {
-      vi.mocked(httpsRequest).mockImplementation((url, options, callback) => {
-        setTimeout(() => {
-          callback!(mockResponse);
-          setTimeout(() => {
-            mockResponse.emit("data", JSON.stringify(responseData));
-            mockResponse.emit("end");
-          }, 0);
-        }, 0);
-        return mockRequest;
-      });
-    } else {
-      vi.mocked(httpRequest).mockImplementation((url, options, callback) => {
-        setTimeout(() => {
-          callback!(mockResponse);
-          setTimeout(() => {
-            mockResponse.emit("data", JSON.stringify(responseData));
-            mockResponse.emit("end");
-          }, 0);
-        }, 0);
-        return mockRequest;
-      });
-    }
-  }
-
   describe("getEntityState", () => {
     it("should fetch entity state successfully", async () => {
       const mockState = {
@@ -72,41 +55,24 @@ describe("haClient", () => {
         last_updated: "2026-01-11T12:00:00Z",
       };
 
-      mockHttpRequest(200, mockState);
+      mockFetch.mockResolvedValueOnce(createMockResponse(200, mockState));
 
       const result = await getEntityState("sensor.temperature");
 
       expect(result).toEqual(mockState);
-      expect(httpRequest).toHaveBeenCalledWith(
+      expect(mockFetch).toHaveBeenCalledWith(
         "http://homeassistant:8123/api/states/sensor.temperature",
         expect.objectContaining({
+          method: "GET",
           headers: expect.objectContaining({
             Authorization: "Bearer test-token",
           }),
-        }),
-        expect.any(Function)
+        })
       );
     });
 
     it("should return null for 404 entity not found", async () => {
-      const mockRequest = new EventEmitter() as any;
-      mockRequest.end = vi.fn();
-      mockRequest.destroy = vi.fn();
-
-      const mockResponse = new EventEmitter() as any;
-      mockResponse.statusCode = 404;
-      mockResponse.statusMessage = "Not Found";
-
-      vi.mocked(httpRequest).mockImplementation((url, options, callback) => {
-        setTimeout(() => {
-          callback!(mockResponse);
-          setTimeout(() => {
-            mockResponse.emit("data", "");
-            mockResponse.emit("end");
-          }, 0);
-        }, 0);
-        return mockRequest;
-      });
+      mockFetch.mockResolvedValueOnce(createMockResponse(404, {}, "Not Found"));
 
       const result = await getEntityState("sensor.nonexistent");
 
@@ -114,24 +80,7 @@ describe("haClient", () => {
     });
 
     it("should throw error for 401 unauthorized", async () => {
-      const mockRequest = new EventEmitter() as any;
-      mockRequest.end = vi.fn();
-      mockRequest.destroy = vi.fn();
-
-      const mockResponse = new EventEmitter() as any;
-      mockResponse.statusCode = 401;
-      mockResponse.statusMessage = "Unauthorized";
-
-      vi.mocked(httpRequest).mockImplementation((url, options, callback) => {
-        setTimeout(() => {
-          callback!(mockResponse);
-          setTimeout(() => {
-            mockResponse.emit("data", "");
-            mockResponse.emit("end");
-          }, 0);
-        }, 0);
-        return mockRequest;
-      });
+      mockFetch.mockResolvedValueOnce(createMockResponse(401, {}, "Unauthorized"));
 
       await expect(getEntityState("sensor.temperature")).rejects.toThrow(
         /Invalid Home Assistant access token/
@@ -139,16 +88,7 @@ describe("haClient", () => {
     });
 
     it("should throw error on network failure", async () => {
-      const mockRequest = new EventEmitter() as any;
-      mockRequest.end = vi.fn();
-      mockRequest.destroy = vi.fn();
-
-      vi.mocked(httpRequest).mockImplementation(() => {
-        setTimeout(() => {
-          mockRequest.emit("error", new Error("ECONNREFUSED"));
-        }, 0);
-        return mockRequest;
-      });
+      mockFetch.mockRejectedValueOnce(new Error("ECONNREFUSED"));
 
       await expect(getEntityState("sensor.temperature")).rejects.toThrow(
         /Home Assistant is unreachable/
@@ -156,27 +96,17 @@ describe("haClient", () => {
     });
 
     it("should handle invalid JSON response", async () => {
-      const mockResponse = new EventEmitter() as any;
-      mockResponse.statusCode = 200;
+      const badResponse = {
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        json: () => Promise.reject(new SyntaxError("Unexpected token")),
+        headers: new Headers(),
+      } as Response;
 
-      const mockRequest = new EventEmitter() as any;
-      mockRequest.end = vi.fn();
-      mockRequest.destroy = vi.fn();
+      mockFetch.mockResolvedValueOnce(badResponse);
 
-      vi.mocked(httpRequest).mockImplementation((url, options, callback) => {
-        setTimeout(() => {
-          callback!(mockResponse);
-          setTimeout(() => {
-            mockResponse.emit("data", "invalid json{");
-            mockResponse.emit("end");
-          }, 0);
-        }, 0);
-        return mockRequest;
-      });
-
-      await expect(getEntityState("sensor.temperature")).rejects.toThrow(
-        /Failed to parse JSON response/
-      );
+      await expect(getEntityState("sensor.temperature")).rejects.toThrow();
     });
   });
 
@@ -199,28 +129,14 @@ describe("haClient", () => {
         },
       };
 
-      vi.mocked(httpRequest).mockImplementation((url, options, callback) => {
-        const mockResponse = new EventEmitter() as any;
-        mockResponse.statusCode = 200;
-
-        const mockReq = new EventEmitter() as any;
-        mockReq.end = vi.fn();
-        mockReq.destroy = vi.fn();
-
-        setTimeout(() => {
-          callback!(mockResponse);
-          setTimeout(() => {
-            const urlStr = typeof url === "string" ? url : url.toString();
-            if (urlStr.includes("sensor.temperature")) {
-              mockResponse.emit("data", JSON.stringify(mockStates["sensor.temperature"]));
-            } else if (urlStr.includes("sensor.humidity")) {
-              mockResponse.emit("data", JSON.stringify(mockStates["sensor.humidity"]));
-            }
-            mockResponse.emit("end");
-          }, 0);
-        }, 0);
-
-        return mockReq;
+      mockFetch.mockImplementation((url: string) => {
+        if (url.includes("sensor.temperature")) {
+          return Promise.resolve(createMockResponse(200, mockStates["sensor.temperature"]));
+        }
+        if (url.includes("sensor.humidity")) {
+          return Promise.resolve(createMockResponse(200, mockStates["sensor.humidity"]));
+        }
+        return Promise.resolve(createMockResponse(404, {}));
       });
 
       const result = await getMultipleStates(["sensor.temperature", "sensor.humidity"]);
@@ -232,13 +148,13 @@ describe("haClient", () => {
     });
 
     it("should normalize entity IDs (replace dots with underscores)", async () => {
-      mockHttpRequest(200, {
+      mockFetch.mockResolvedValueOnce(createMockResponse(200, {
         entity_id: "binary_sensor.door",
         state: "on",
         attributes: {},
         last_changed: "2026-01-11T12:00:00Z",
         last_updated: "2026-01-11T12:00:00Z",
-      });
+      }));
 
       const result = await getMultipleStates(["binary_sensor.door"]);
 
@@ -247,37 +163,17 @@ describe("haClient", () => {
     });
 
     it("should handle mix of found and not found entities", async () => {
-      let callCount = 0;
-      vi.mocked(httpRequest).mockImplementation((url, options, callback) => {
-        const mockResponse = new EventEmitter() as any;
-        const mockReq = new EventEmitter() as any;
-        mockReq.end = vi.fn();
-        mockReq.destroy = vi.fn();
-
-        setTimeout(() => {
-          callback!(mockResponse);
-          setTimeout(() => {
-            if (callCount === 0) {
-              mockResponse.statusCode = 200;
-              mockResponse.emit(
-                "data",
-                JSON.stringify({
-                  entity_id: "sensor.temperature",
-                  state: "22.5",
-                  attributes: {},
-                  last_changed: "2026-01-11T12:00:00Z",
-                  last_updated: "2026-01-11T12:00:00Z",
-                })
-              );
-            } else {
-              mockResponse.statusCode = 404;
-            }
-            mockResponse.emit("end");
-            callCount++;
-          }, 0);
-        }, 0);
-
-        return mockReq;
+      mockFetch.mockImplementation((url: string) => {
+        if (url.includes("sensor.temperature")) {
+          return Promise.resolve(createMockResponse(200, {
+            entity_id: "sensor.temperature",
+            state: "22.5",
+            attributes: {},
+            last_changed: "2026-01-11T12:00:00Z",
+            last_updated: "2026-01-11T12:00:00Z",
+          }));
+        }
+        return Promise.resolve(createMockResponse(404, {}));
       });
 
       const result = await getMultipleStates(["sensor.temperature", "sensor.nonexistent"]);

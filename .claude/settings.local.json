@@ -23,7 +23,8 @@
       "Skill(frontend-design)",
       "Bash(tree:*)",
       "Bash(git mv:*)",
-      "Bash(npx vitest:*)"
+      "Bash(npx vitest:*)",
+      "Bash(node --version:*)"
     ],
     "deny": [],
     "ask": []

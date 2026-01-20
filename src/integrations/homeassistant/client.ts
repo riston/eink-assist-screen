@@ -1,9 +1,17 @@
-import { request as httpsRequest } from "node:https";
-import { request as httpRequest } from "node:http";
 import { getConfig } from "../../config/index.js";
 import type { EntityState, CalendarEvent } from "./types.js";
 
 export type { EntityState, CalendarEvent };
+
+interface ApiError extends Error {
+  statusCode: number;
+}
+
+function createApiError(message: string, statusCode: number): ApiError {
+  const error = new Error(message) as ApiError;
+  error.statusCode = statusCode;
+  return error;
+}
 
 /**
  * Fetch a single entity state from Home Assistant
@@ -18,7 +26,7 @@ export async function getEntityState(entityId: string): Promise<EntityState | nu
     const response = await makeRequest(url, config.accessToken);
     return response as EntityState;
   } catch (error) {
-    if ((error as any).statusCode === 404) {
+    if ((error as ApiError).statusCode === 404) {
       return null; // Entity not found
     }
     throw error;
@@ -80,7 +88,7 @@ export async function getCalendarEvents(
     }
     return events;
   } catch (error) {
-    if ((error as any).statusCode === 404) {
+    if ((error as ApiError).statusCode === 404) {
       console.log(`[Calendar] Calendar not found: ${entityId}`);
       return []; // Calendar not found
     }
@@ -90,68 +98,51 @@ export async function getCalendarEvents(
 }
 
 /**
- * Make HTTP/HTTPS request to Home Assistant API
+ * Make HTTP request to Home Assistant API using fetch
  */
-function makeRequest(url: string, accessToken: string, timeout: number = 5000): Promise<any> {
-  return new Promise((resolve, reject) => {
-    const urlObj = new URL(url);
-    const request = urlObj.protocol === "https:" ? httpsRequest : httpRequest;
+async function makeRequest(url: string, accessToken: string, timeout: number = 5000): Promise<unknown> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-    const options = {
+  try {
+    const response = await fetch(url, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
-      timeout,
-    };
-
-    const req = request(url, options, (res) => {
-      let data = "";
-
-      res.on("data", (chunk) => {
-        data += chunk;
-      });
-
-      res.on("end", () => {
-        if (res.statusCode === 200) {
-          try {
-            resolve(JSON.parse(data));
-          } catch (error) {
-            reject(new Error(`Failed to parse JSON response: ${(error as Error).message}`));
-          }
-        } else if (res.statusCode === 401 || res.statusCode === 403) {
-          reject(
-            Object.assign(new Error("Invalid Home Assistant access token"), {
-              statusCode: res.statusCode,
-            })
-          );
-        } else if (res.statusCode === 404) {
-          reject(Object.assign(new Error("Entity not found"), { statusCode: 404 }));
-        } else {
-          reject(
-            Object.assign(
-              new Error(`Home Assistant API error: ${res.statusCode} ${res.statusMessage}`),
-              { statusCode: res.statusCode }
-            )
-          );
-        }
-      });
+      signal: controller.signal,
     });
 
-    req.on("error", (error) => {
-      reject(
-        Object.assign(new Error(`Home Assistant is unreachable: ${error.message}`), {
-          originalError: error,
-        })
-      );
-    });
+    clearTimeout(timeoutId);
 
-    req.on("timeout", () => {
-      req.destroy();
-      reject(new Error(`Request to Home Assistant timed out after ${timeout}ms`));
-    });
+    if (response.ok) {
+      return await response.json();
+    }
 
-    req.end();
-  });
+    if (response.status === 401 || response.status === 403) {
+      throw createApiError("Invalid Home Assistant access token", response.status);
+    }
+
+    if (response.status === 404) {
+      throw createApiError("Entity not found", 404);
+    }
+
+    throw createApiError(
+      `Home Assistant API error: ${response.status} ${response.statusText}`,
+      response.status
+    );
+  } catch (error) {
+    clearTimeout(timeoutId);
+
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error(`Request to Home Assistant timed out after ${timeout}ms`);
+    }
+
+    if ((error as ApiError).statusCode) {
+      throw error;
+    }
+
+    throw new Error(`Home Assistant is unreachable: ${(error as Error).message}`);
+  }
 }
