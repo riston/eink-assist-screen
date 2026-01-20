@@ -22,7 +22,8 @@
       "Skill(frontend-design:frontend-design)",
       "Skill(frontend-design)",
       "Bash(tree:*)",
-      "Bash(git mv:*)"
+      "Bash(git mv:*)",
+      "Bash(npx vitest:*)"
     ],
     "deny": [],
     "ask": []

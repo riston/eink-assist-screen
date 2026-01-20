@@ -18,7 +18,7 @@ interface RenderResult {
 interface ErrorResult {
   error: string;
   message: string;
-  details?: any;
+  details?: unknown;
 }
 
 /**
@@ -212,10 +212,12 @@ export async function handleRender(
   }
 }
 
+type JsonResponse = RenderResult | ErrorResult;
+
 /**
  * Send JSON response
  */
-function sendJson(res: ServerResponse, statusCode: number, data: any): void {
+function sendJson(res: ServerResponse, statusCode: number, data: JsonResponse): void {
   res.writeHead(statusCode, { "Content-Type": "application/json" });
   res.end(JSON.stringify(data, null, 2));
 }
@@ -228,13 +230,12 @@ function sendError(
   statusCode: number,
   error: string,
   message: string,
-  details?: any
+  details?: unknown
 ): void {
-  const errorResponse: ErrorResult = {
-    error,
-    message,
-    ...(details && { details }),
-  };
+  const errorResponse: ErrorResult = { error, message };
+  if (details !== undefined) {
+    errorResponse.details = details;
+  }
 
   sendJson(res, statusCode, errorResponse);
 }

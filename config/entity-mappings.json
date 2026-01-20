@@ -22,6 +22,7 @@
     "update_puppet": "update.puppet_update",
     "update_samba": "update.samba_share_update",
     "update_terminal": "update.terminal_ssh_update",
-    "risto_kalender": "calendar.risto_kalender"
+    "risto_kalender": "calendar.risto_kalender",
+    "rss_feed": "sensor.rss_feed_items"
   }
 }

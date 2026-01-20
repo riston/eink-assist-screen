@@ -2,33 +2,29 @@
 E-Ink Dashboard Template - dashboard-full.html
 Optimized for 800x480px e-ink displays
 
-REQUIRED ENTITIES:
-==================
+ENTITIES:
+=========
 
 Weather:
-  - weather.forecast_ehte (current conditions with temperature, state)
-  - sensor.weather_forecast (forecast array with daily forecasts for next 7 days)
-
-Security:
-  - binary_sensor.main_door_iaszone (main door sensor)
-  - binary_sensor.lumi_lumi_sensor_wleak_aq1_iaszone (leak detector)
+  - weather.forecast_ehte (current conditions with temperature, pressure, wind)
+  - sensor.weather_forecast (forecast array with daily forecasts)
 
 Climate & Sensors:
   - sensor.temperature_humidity_sensor_6e74_temperature (room temperature)
   - sensor.temperature_humidity_sensor_6e74_humidity (room humidity)
-  - sensor.lumi_lumi_sensor_wleak_aq1_device_temperature (leak sensor temperature)
-  - sensor.main_door_battery (door sensor battery)
+  - sensor.lumi_lumi_sensor_wleak_aq1_device_temperature (floor temperature)
+  - binary_sensor.main_door_iaszone (door sensor)
+  - binary_sensor.lumi_lumi_sensor_wleak_aq1_iaszone (leak detector)
 
-Media:
-  - media_player.living_room_tv (media player with volume, title, artist, source)
+RSS Feed:
+  - sensor.rss_feed_items (RSS feed with titles attribute)
 
-Network & System:
-  - binary_sensor.archer_ax10_wan_status (WAN connection)
+Network:
   - sensor.archer_ax10_kib_s_received (download speed)
   - sensor.archer_ax10_kib_s_sent (upload speed)
-  - sensor.backup_last_successful_automatic_backup (last backup time)
-  - sensor.backup_backup_manager_state (backup state)
-  - update.* entities (counted for alerts)
+
+Media (banner only):
+  - media_player.living_room_tv (shows in banner when playing)
 
 All entities are optional - missing entities will hide their sections gracefully.
 -->
@@ -64,16 +60,12 @@ All entities are optional - missing entities will hide their sections gracefully
       color: white;
     }
 
-    .bg-white {
-      background-color: white;
-      color: black;
-    }
-
     .bold {
       font-weight: bold;
     }
 
     .big-text {
+      height: 80px;
       font-size: 4rem;
       font-weight: bold;
       line-height: 1;
@@ -132,19 +124,6 @@ All entities are optional - missing entities will hide their sections gracefully
     .icon-16 svg {
       width: 16px;
       height: 16px;
-      margin: 0;
-    }
-
-    .icon-20 {
-      display: inline-flex;
-      width: 20px;
-      height: 20px;
-      margin-right: 6px;
-    }
-
-    .icon-20 svg {
-      width: 20px;
-      height: 20px;
       margin: 0;
     }
 
@@ -260,37 +239,6 @@ All entities are optional - missing entities will hide their sections gracefully
       top: 6px;
     }
 
-    .security-box {
-      flex: 1;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      gap: 10px;
-    }
-
-    .security-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      font-size: 0.85rem;
-      font-weight: bold;
-      padding: 5px;
-    }
-
-    .security-item svg {
-      width: 28px;
-      height: 28px;
-      margin: 0 0 4px 0;
-    }
-
-    .security-item.alert {
-      color: white;
-      background: black;
-      padding: 8px;
-    }
-
     /* --- SECTION 2: THREE COLUMNS (Bottom Half) --- */
     .bottom-section {
       flex: 6;
@@ -333,17 +281,6 @@ All entities are optional - missing entities will hide their sections gracefully
       height: 100%;
     }
 
-    .h-sep {
-      border-bottom: 2px solid black;
-      margin: 5px 0;
-    }
-
-    /* Battery warning */
-    .battery-low {
-      color: black;
-      font-weight: bold;
-    }
-
     /* Calendar items */
     .calendar-item {
       margin-bottom: 10px;
@@ -369,9 +306,10 @@ All entities are optional - missing entities will hide their sections gracefully
     }
 
     .calendar-summary {
-      margin-top: 2px;
+      margin-top: 6px;
       margin-left: 20px;
       font-size: 0.9rem;
+      font-weight: 600;
       line-height: 1.25;
     }
   </style>
@@ -395,7 +333,9 @@ All entities are optional - missing entities will hide their sections gracefully
           {{{icon "volume-high"}}}
           {{/if}}
         </span>
-        {{truncate entities.living_room_tv.attributes.media_title 35}}{{#if entities.living_room_tv.attributes.media_artist}} - {{truncate entities.living_room_tv.attributes.media_artist 15}}{{/if}}
+        {{truncate entities.living_room_tv.attributes.media_title 35}}{{#if
+        entities.living_room_tv.attributes.media_artist}} - {{truncate entities.living_room_tv.attributes.media_artist
+        15}}{{/if}}
         {{else}}
         {{formatTime now "12h"}} | EHTE
         {{/if}}
@@ -434,6 +374,11 @@ All entities are optional - missing entities will hide their sections gracefully
         </div>
         <div class="weather-details">
           <div class="big-text">{{formatNumber entities.weather.attributes.temperature 1}}°C</div>
+          {{#if entities.weather.attributes.pressure}}
+          <div class="wind-info">
+            <span>{{round entities.weather.attributes.pressure}} hPa</span>
+          </div>
+          {{/if}}
         </div>
       </div>
       {{else}}
@@ -510,24 +455,7 @@ All entities are optional - missing entities will hide their sections gracefully
       </div>
       {{/if}}
 
-      <div class="vertical-divider"></div>
-
-      <div class="security-box">
-        {{#if entities.main_door}}
-        <div class="security-item {{#if entities.main_door.state_is_on}}alert{{/if}}">
-          {{{icon "lock"}}}
-          <span>DOOR<br>{{#if entities.main_door.state_is_on}}OPEN{{else}}CLOSED{{/if}}</span>
-        </div>
-        {{/if}}
-        {{#if entities.leak_detector}}
-        <div class="security-item {{#if entities.leak_detector.state_is_on}}alert{{/if}}">
-          {{{icon "water-drop"}}}
-          <span>LEAK<br>{{#if entities.leak_detector.state_is_on}}ALERT{{else}}DRY{{/if}}</span>
-        </div>
-        {{/if}}
-      </div>
     </section>
-
 
     <section class="bottom-section">
 
@@ -538,7 +466,7 @@ All entities are optional - missing entities will hide their sections gracefully
           <div class="data-row">
             <div style="display:flex; align-items:center">
               {{{icon "thermometer"}}}
-              Room Temp:
+              Room:
             </div>
             <span class="bold med-text">{{formatNumber entities.indoor_temp.state 1}} °C</span>
           </div>
@@ -557,22 +485,29 @@ All entities are optional - missing entities will hide their sections gracefully
           <div class="data-row">
             <div style="display:flex; align-items:center">
               {{{icon "thermometer"}}}
-              Floor Temp:
+              Floor:
             </div>
             <span class="bold med-text">{{formatNumber entities.leak_sensor_temp.state 1}} °C</span>
           </div>
           {{/if}}
 
-          {{#if entities.main_door_battery}}
+          {{#if entities.main_door}}
           <div class="data-row">
             <div style="display:flex; align-items:center">
-              {{{icon "battery"}}}
-              <span>Door Batt:</span>
+              {{{icon "lock"}}}
+              Door:
             </div>
-            <span class="bold {{#if (lt entities.main_door_battery.state_number 20)}}battery-low{{/if}}">
-              {{round entities.main_door_battery.state}}%
-              {{#if (lt entities.main_door_battery.state_number 20)}}⚠{{/if}}
-            </span>
+            <span class="bold med-text">{{#if entities.main_door.state_is_on}}OPEN{{else}}CLOSED{{/if}}</span>
+          </div>
+          {{/if}}
+
+          {{#if entities.leak_detector}}
+          <div class="data-row">
+            <div style="display:flex; align-items:center">
+              {{{icon "water-drop"}}}
+              Leak:
+            </div>
+            <span class="bold med-text">{{#if entities.leak_detector.state_is_on}}ALERT{{else}}DRY{{/if}}</span>
           </div>
           {{/if}}
         </div>
@@ -581,30 +516,17 @@ All entities are optional - missing entities will hide their sections gracefully
       <div class="vertical-divider"></div>
 
       <div class="column">
-        <header class="column-header bg-black">MEDIA PLAYER</header>
-        <div class="column-content">
-          {{#if entities.living_room_tv}}
-          <div class="data-row">
-            <div style="display:flex; align-items:center;">
-              <span class="icon-20">
-                {{#if (eq entities.living_room_tv.state "playing")}}
-                {{{icon "play"}}}
-                {{else if (eq entities.living_room_tv.state "paused")}}
-                {{{icon "pause"}}}
-                {{else}}
-                {{{icon "stop"}}}
-                {{/if}}
-              </span>
-              {{#if
-              entities.living_room_tv.attributes.app_name}}{{entities.living_room_tv.attributes.app_name}}{{else}}TV{{/if}}
-            </div>
+        <header class="column-header bg-black">NEWS</header>
+        <div class="column-content" style="gap: 0; font-size: 0.9rem; font-weight: 600; padding: 8px;">
+          {{#if entities.rss_feed.attributes.titles}}
+          {{#each (limit (shuffle (split entities.rss_feed.attributes.titles ",")) 4)}}
+          <div class="news-item" style="padding: 6px 0; {{#unless @first}}border-top: 1px solid black;{{/unless}}">
+            {{this}}
           </div>
-          {{#if entities.living_room_tv.attributes.media_title}}
-          <div class="bold" style="font-size:0.95rem;">{{truncate entities.living_room_tv.attributes.media_title 25}}</div>
-          {{/if}}
+          {{/each}}
           {{else}}
           <div style="display: flex; align-items: center; justify-content: center; height: 100%;">
-            <span>No media playing</span>
+            <span>No news available</span>
           </div>
           {{/if}}
         </div>
@@ -632,10 +554,8 @@ All entities are optional - missing entities will hide their sections gracefully
           {{else}}
           <div class="small-text">Calendar unavailable</div>
           {{/if}}
-
         </div>
       </div>
-
     </section>
   </div>
 

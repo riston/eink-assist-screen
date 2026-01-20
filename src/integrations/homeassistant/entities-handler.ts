@@ -3,13 +3,13 @@ import { loadTemplate, templateExists, listTemplates } from "../../templates/ind
 import { extractEntityIds, extractCalendarIds } from "../../templates/index.js";
 import { getMultipleStates, getCalendarEvents } from "./client.js";
 import { getEntityMappings } from "../../config/index.js";
-import type { CalendarEvent } from "./types.js";
+import type { CalendarEvent, EntityState } from "./types.js";
 
 interface EntitiesResult {
   success: true;
   template: string;
   entities_count: number;
-  entities: Record<string, any>;
+  entities: Record<string, EntityState | null>;
   calendars_count: number;
   calendars: Record<string, CalendarEvent[]>;
   fetched_at: string;
@@ -18,7 +18,7 @@ interface EntitiesResult {
 interface ErrorResult {
   error: string;
   message: string;
-  details?: any;
+  details?: unknown;
 }
 
 /**
@@ -197,10 +197,12 @@ export async function handleEntities(
   }
 }
 
+type JsonResponse = EntitiesResult | ErrorResult;
+
 /**
  * Send JSON response
  */
-function sendJson(res: ServerResponse, statusCode: number, data: any): void {
+function sendJson(res: ServerResponse, statusCode: number, data: JsonResponse): void {
   res.writeHead(statusCode, { "Content-Type": "application/json" });
   res.end(JSON.stringify(data, null, 2));
 }
@@ -213,13 +215,12 @@ function sendError(
   statusCode: number,
   error: string,
   message: string,
-  details?: any
+  details?: unknown
 ): void {
-  const errorResponse: ErrorResult = {
-    error,
-    message,
-    ...(details && { details }),
-  };
+  const errorResponse: ErrorResult = { error, message };
+  if (details !== undefined) {
+    errorResponse.details = details;
+  }
 
   sendJson(res, statusCode, errorResponse);
 }

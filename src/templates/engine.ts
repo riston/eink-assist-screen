@@ -3,42 +3,52 @@ import type { EntityState, CalendarEvent } from "../integrations/homeassistant/t
 import { getEntityMappings } from "../config/index.js";
 import { loadWeatherIcons, getWeatherIcon, loadUiIcons, getUiIcon } from "./icons/index.js";
 
+// Helper type for template values that could be string or number
+type TemplateValue = string | number | null | undefined;
+
+// Helper to safely convert to number
+function toNumber(value: unknown): number {
+  if (typeof value === "number") return value;
+  if (typeof value === "string") return parseFloat(value);
+  return NaN;
+}
+
 // Register custom Handlebars helpers
 function registerHelpers() {
   // Format number with specific decimal places
-  Handlebars.registerHelper("formatNumber", function (value: any, decimals: number = 2) {
-    const num = parseFloat(value);
+  Handlebars.registerHelper("formatNumber", function (value: TemplateValue, decimals: number = 2) {
+    const num = toNumber(value);
     if (isNaN(num)) return value;
     return num.toFixed(decimals);
   });
 
   // Round to nearest integer
-  Handlebars.registerHelper("round", function (value: any) {
-    const num = parseFloat(value);
+  Handlebars.registerHelper("round", function (value: TemplateValue) {
+    const num = toNumber(value);
     if (isNaN(num)) return value;
     return Math.round(num);
   });
 
   // Check if state equals a value
-  Handlebars.registerHelper("state_is", function (entity: any, targetState: string) {
+  Handlebars.registerHelper("state_is", function (entity: { state?: string } | null | undefined, targetState: string) {
     return entity?.state === targetState;
   });
 
   // Math operations
-  Handlebars.registerHelper("add", function (a: any, b: any) {
-    return parseFloat(a) + parseFloat(b);
+  Handlebars.registerHelper("add", function (a: TemplateValue, b: TemplateValue) {
+    return toNumber(a) + toNumber(b);
   });
 
-  Handlebars.registerHelper("subtract", function (a: any, b: any) {
-    return parseFloat(a) - parseFloat(b);
+  Handlebars.registerHelper("subtract", function (a: TemplateValue, b: TemplateValue) {
+    return toNumber(a) - toNumber(b);
   });
 
-  Handlebars.registerHelper("multiply", function (a: any, b: any) {
-    return parseFloat(a) * parseFloat(b);
+  Handlebars.registerHelper("multiply", function (a: TemplateValue, b: TemplateValue) {
+    return toNumber(a) * toNumber(b);
   });
 
-  Handlebars.registerHelper("divide", function (a: any, b: any) {
-    return parseFloat(a) / parseFloat(b);
+  Handlebars.registerHelper("divide", function (a: TemplateValue, b: TemplateValue) {
+    return toNumber(a) / toNumber(b);
   });
 
   // String operations
@@ -53,6 +63,29 @@ function registerHelpers() {
   Handlebars.registerHelper("truncate", function (value: string, length: number) {
     const str = value?.toString() || "";
     return str.length > length ? str.substring(0, length) + "..." : str;
+  });
+
+  // Split string into array (useful for comma-separated values)
+  Handlebars.registerHelper("split", function (value: string, delimiter: string = ",") {
+    if (!value) return [];
+    return value.toString().split(delimiter).map(s => s.trim());
+  });
+
+  // Shuffle array randomly
+  Handlebars.registerHelper("shuffle", function <T>(array: T[] | unknown): T[] | unknown {
+    if (!Array.isArray(array)) return array;
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  });
+
+  // Limit array to first N items
+  Handlebars.registerHelper("limit", function <T>(array: T[] | unknown, count: number): T[] | unknown {
+    if (!Array.isArray(array)) return array;
+    return array.slice(0, count);
   });
 
   // Time formatting helper
@@ -98,35 +131,35 @@ function registerHelpers() {
   });
 
   // Comparison helpers
-  Handlebars.registerHelper("lt", function (a: any, b: any) {
-    return parseFloat(a) < parseFloat(b);
+  Handlebars.registerHelper("lt", function (a: TemplateValue, b: TemplateValue) {
+    return toNumber(a) < toNumber(b);
   });
 
-  Handlebars.registerHelper("gt", function (a: any, b: any) {
-    return parseFloat(a) > parseFloat(b);
+  Handlebars.registerHelper("gt", function (a: TemplateValue, b: TemplateValue) {
+    return toNumber(a) > toNumber(b);
   });
 
-  Handlebars.registerHelper("lte", function (a: any, b: any) {
-    return parseFloat(a) <= parseFloat(b);
+  Handlebars.registerHelper("lte", function (a: TemplateValue, b: TemplateValue) {
+    return toNumber(a) <= toNumber(b);
   });
 
-  Handlebars.registerHelper("gte", function (a: any, b: any) {
-    return parseFloat(a) >= parseFloat(b);
+  Handlebars.registerHelper("gte", function (a: TemplateValue, b: TemplateValue) {
+    return toNumber(a) >= toNumber(b);
   });
 
-  Handlebars.registerHelper("eq", function (a: any, b: any) {
+  Handlebars.registerHelper("eq", function (a: unknown, b: unknown) {
     return a === b;
   });
 
   // Percentage conversion (0.0-1.0 to 0-100)
-  Handlebars.registerHelper("percentage", function (value: any) {
-    const num = parseFloat(value);
+  Handlebars.registerHelper("percentage", function (value: TemplateValue) {
+    const num = toNumber(value);
     return isNaN(num) ? 0 : Math.round(num * 100);
   });
 
   // Volume bar visualization
-  Handlebars.registerHelper("volumeBar", function (volumeLevel: any, barLength: number = 10) {
-    const level = parseFloat(volumeLevel);
+  Handlebars.registerHelper("volumeBar", function (volumeLevel: TemplateValue, barLength: number = 10) {
+    const level = toNumber(volumeLevel);
     if (isNaN(level)) return '[──────────]';
 
     const filled = Math.round(level * barLength);

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { getEntityState, getMultipleStates } from "../index.js";
 import { request as httpsRequest } from "node:https";
-import { request as httpRequest } from "node:http";
+import { request as httpRequest, ClientRequest, IncomingMessage } from "node:http";
 import { getConfig } from "../../../config/index.js";
 import { EventEmitter } from "node:events";
 
@@ -23,14 +23,16 @@ describe("haClient", () => {
     });
   });
 
-  function mockHttpRequest(statusCode: number, responseData: any, isHttps = false) {
-    const mockResponse = new EventEmitter() as any;
-    mockResponse.statusCode = statusCode;
-    mockResponse.statusMessage = "OK";
+  function mockHttpRequest(statusCode: number, responseData: unknown, isHttps = false) {
+    const mockResponse = Object.assign(new EventEmitter(), {
+      statusCode,
+      statusMessage: "OK",
+    }) as IncomingMessage;
 
-    const mockRequest = new EventEmitter() as any;
-    mockRequest.end = vi.fn();
-    mockRequest.destroy = vi.fn();
+    const mockRequest = Object.assign(new EventEmitter(), {
+      end: vi.fn(),
+      destroy: vi.fn(),
+    }) as unknown as ClientRequest;
 
     if (isHttps) {
       vi.mocked(httpsRequest).mockImplementation((url, options, callback) => {
