@@ -2,6 +2,8 @@
 
 A rendering service that converts Handlebars HTML templates into images optimized for e-ink displays. Fetches real-time sensor data from Home Assistant and renders it into multiple image formats (PNG, JPEG, WebP, BMP).
 
+_NB!_ This is an experimental project, make sure to change the entities and template mapping according to your Home Assistant setup.
+
 ![Screen](/assets/screen.jpg)
 
 ## Hardware
