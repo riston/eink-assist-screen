@@ -62,16 +62,6 @@ Replace the **dot** between domain and entity name with an **underscore**:
 {{add entities.sensor_1.state entities.sensor_2.state}}
 ```
 
-## Debugging Entity Extraction
-
-### Test What Entities Will Be Fetched
-
-```bash
-node test-entity-extraction.js
-```
-
-This shows exactly which entity IDs will be requested from Home Assistant.
-
 ### Common Issues
 
 #### 1. Missing Domain Prefix
@@ -227,15 +217,11 @@ body {
 ## Workflow
 
 1. **Create template** in `templates/` directory
-2. **Test entity extraction:**
-   ```bash
-   node test-entity-extraction.js
-   ```
-3. **Render with HA data:**
+2. **Render with HA data:**
    ```bash
    curl "http://localhost:8000/ha/render?template=your-template.html"
    ```
-4. **Convert to image:**
+3. **Convert to image:**
    ```bash
    curl "http://localhost:8000/image?template=your-template.html&format=bmp" > output.bmp
    ```

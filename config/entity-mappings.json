@@ -14,14 +14,6 @@
     "wan_status": "binary_sensor.archer_ax10_wan_status",
     "download_speed": "sensor.archer_ax10_kib_s_received",
     "upload_speed": "sensor.archer_ax10_kib_s_sent",
-    "last_backup": "sensor.backup_last_successful_automatic_backup",
-    "backup_state": "sensor.backup_backup_manager_state",
-    "update_esphome": "update.esphome_device_builder_update",
-    "update_ha_core": "update.home_assistant_core_update",
-    "update_lovelace": "update.lovelace_kindle_screensaver_update",
-    "update_puppet": "update.puppet_update",
-    "update_samba": "update.samba_share_update",
-    "update_terminal": "update.terminal_ssh_update",
     "risto_kalender": "calendar.risto_kalender",
     "rss_feed": "sensor.rss_feed_items"
   }

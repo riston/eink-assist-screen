@@ -3,10 +3,10 @@
  */
 
 /** Base host for server binding and config generation */
-export const BASE_HOST = "192.168.0.113";
+export const BASE_HOST = process.env.BASE_HOST || "localhost";
 
 /** Base port for server binding */
-export const BASE_PORT = 8000;
+export const BASE_PORT = parseInt(process.env.BASE_PORT || "8000", 10);
 
 /** Active template ID used in config endpoint */
-export const ACTIVE_TEMPLATE_ID = "dashboard-full.html";
+export const ACTIVE_TEMPLATE_ID = process.env.ACTIVE_TEMPLATE || "dashboard-full.html";
