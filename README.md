@@ -11,6 +11,17 @@ _NB!_ This is an experimental project, make sure to change the entities and temp
 - [Waveshare 7.5" e-Paper V2](https://www.waveshare.com/wiki/7.5inch_e-Paper_HAT_Manual) (800x480, 1-bit monochrome)
 - [E-Paper ESP32 Driver Board](https://www.waveshare.com/e-paper-esp32-driver-board.htm)
 
+### E-Ink Stand (Laser Cut)
+
+The `eink-stand/` directory contains laser cut files for a plywood stand to hold the e-ink display:
+
+| File | Format | Description |
+|------|--------|-------------|
+| `eink-stand.dxf` | DXF | Universal CAD format, compatible with most laser cutters |
+| `eink-stand.lbrn2` | LightBurn | Native LightBurn project file with layer settings |
+
+**Material**: 3mm plywood (birch or similar)
+
 ## Architecture
 
 ```
