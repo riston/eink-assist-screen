@@ -1,0 +1,19 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Server rack -->
+  <rect x="12" y="16" width="40" height="12" rx="2" fill="none" stroke="black" stroke-width="3"/>
+  <rect x="12" y="30" width="40" height="12" rx="2" fill="none" stroke="black" stroke-width="3"/>
+  <rect x="12" y="44" width="40" height="12" rx="2" fill="none" stroke="black" stroke-width="3"/>
+
+  <!-- LED indicators -->
+  <circle cx="18" cy="22" r="2" fill="black"/>
+  <circle cx="24" cy="22" r="2" fill="black"/>
+  <circle cx="18" cy="36" r="2" fill="black"/>
+  <circle cx="24" cy="36" r="2" fill="black"/>
+  <circle cx="18" cy="50" r="2" fill="black"/>
+  <circle cx="24" cy="50" r="2" fill="black"/>
+
+  <!-- Warning triangle -->
+  <path d="M 42 8 L 48 18 L 36 18 Z" fill="black"/>
+  <line x1="42" y1="12" x2="42" y2="14" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+  <circle cx="42" cy="16" r="0.8" fill="white"/>
+</svg>

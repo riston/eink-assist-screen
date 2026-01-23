@@ -1,0 +1,13 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <!-- WiFi waves -->
+  <path d="M 32 52 Q 32 48 32 48" stroke="black" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <circle cx="32" cy="54" r="3" fill="black"/>
+
+  <path d="M 20 40 Q 32 30 44 40" stroke="black" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M 14 32 Q 32 18 50 32" stroke="black" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M 8 24 Q 32 6 56 24" stroke="black" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+  <!-- X overlay -->
+  <line x1="12" y1="12" x2="52" y2="52" stroke="black" stroke-width="4" stroke-linecap="round"/>
+  <line x1="52" y1="12" x2="12" y2="52" stroke="black" stroke-width="4" stroke-linecap="round"/>
+</svg>
