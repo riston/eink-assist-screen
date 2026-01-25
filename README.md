@@ -277,6 +277,105 @@ npm test           # Run once
 npm run test:watch # Watch mode
 ```
 
+## Mock Home Assistant Server
+
+For development without access to a real Home Assistant instance, use the built-in mock server.
+
+### Starting the Mock Server
+
+```bash
+# Build and start mock server
+npm run dev:mock
+
+# Or if already built
+npm run mock-server
+```
+
+The mock server runs on port 8124 by default. Set `MOCK_HA_PORT` to use a different port.
+
+### Using Mock Server with the App
+
+In one terminal, start the mock server:
+
+```bash
+npm run mock-server
+```
+
+In another terminal, start the main app pointing to the mock server:
+
+```bash
+HA_URL=http://localhost:8124 HA_ACCESS_TOKEN=mock-token npm start
+```
+
+### Mock Data Configuration
+
+Mock entity values are defined in `config/mock-data.json`. The file contains:
+
+- **entities**: Static values for all entities (weather, sensors, binary sensors, media player, etc.)
+- **calendars**: Mock calendar events with relative date offsets
+
+#### Date Offsets
+
+The mock data supports relative date offsets that are resolved at runtime:
+
+| Format       | Example        | Description                   |
+| ------------ | -------------- | ----------------------------- |
+| `+Nd`        | `+0d`, `+1d`   | Days from today               |
+| `+Nh`        | `+6h`, `+12h`  | Hours from now                |
+| `+Nd HH:MM`  | `+1d 14:00`    | Specific time on a future day |
+
+Example calendar event in `mock-data.json`:
+
+```json
+{
+  "summary": "Team Meeting",
+  "start_offset": "+1d 09:00",
+  "end_offset": "+1d 10:00"
+}
+```
+
+### Mock Server Endpoints
+
+| Endpoint                                     | Description                        |
+| -------------------------------------------- | ---------------------------------- |
+| `GET /api`                                   | List all available entities        |
+| `GET /api/states/{entity_id}`                | Get entity state                   |
+| `GET /api/calendars/{entity_id}?start=&end=` | Get calendar events in date range  |
+
+### Testing the Mock Server
+
+```bash
+# List all entities
+curl http://localhost:8124/api
+
+# Get weather entity
+curl http://localhost:8124/api/states/weather.forecast_ehte
+
+# Get indoor temperature
+curl http://localhost:8124/api/states/sensor.temperature_humidity_sensor_6e74_temperature
+
+# Get calendar events
+curl "http://localhost:8124/api/calendars/calendar.risto_kalender?start=2026-01-01&end=2026-01-31"
+```
+
+### Adding New Mock Entities
+
+Edit `config/mock-data.json` to add new entities:
+
+```json
+{
+  "entities": {
+    "sensor.my_new_sensor": {
+      "state": "42",
+      "attributes": {
+        "unit_of_measurement": "%",
+        "friendly_name": "My New Sensor"
+      }
+    }
+  }
+}
+```
+
 ### Examples
 
 **Render template to image:**

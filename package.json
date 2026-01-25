@@ -6,6 +6,8 @@
   "scripts": {
     "build": "tsc && cp -r src/templates/icons/weather src/templates/icons/ui dist/templates/icons/",
     "start": "node dist/index.js",
+    "mock-server": "node dist/mock-server/index.js",
+    "dev:mock": "npm run build && npm run mock-server",
     "test": "vitest run",
     "test:watch": "vitest"
   },

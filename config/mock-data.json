@@ -1,0 +1,220 @@
+{
+  "version": "1.0",
+  "description": "Mock data for Home Assistant development server",
+
+  "entities": {
+    "weather.forecast_ehte": {
+      "state": "partlycloudy",
+      "attributes": {
+        "temperature": 12.5,
+        "humidity": 78,
+        "pressure": 1013,
+        "wind_speed": 5.2,
+        "wind_bearing": 225,
+        "visibility": 10,
+        "friendly_name": "Weather Forecast",
+        "attribution": "Mock Weather Data"
+      }
+    },
+
+    "sensor.weather_forecast": {
+      "state": "available",
+      "attributes": {
+        "friendly_name": "Weather Forecast Sensor",
+        "forecast": [
+          {
+            "datetime": "+0d",
+            "condition": "partlycloudy",
+            "temperature": 14,
+            "templow": 8
+          },
+          {
+            "datetime": "+1d",
+            "condition": "rainy",
+            "temperature": 11,
+            "templow": 6
+          },
+          {
+            "datetime": "+2d",
+            "condition": "cloudy",
+            "temperature": 13,
+            "templow": 7
+          },
+          {
+            "datetime": "+3d",
+            "condition": "sunny",
+            "temperature": 16,
+            "templow": 9
+          },
+          {
+            "datetime": "+4d",
+            "condition": "partlycloudy",
+            "temperature": 15,
+            "templow": 10
+          },
+          {
+            "datetime": "+5d",
+            "condition": "rainy",
+            "temperature": 12,
+            "templow": 7
+          }
+        ]
+      }
+    },
+
+    "sun.sun": {
+      "state": "above_horizon",
+      "attributes": {
+        "next_dawn": "+6h",
+        "next_dusk": "+12h",
+        "next_midnight": "+14h",
+        "next_noon": "+2h",
+        "next_rising": "+7h",
+        "next_setting": "+11h",
+        "elevation": 45.2,
+        "azimuth": 180.5,
+        "rising": true,
+        "friendly_name": "Sun"
+      }
+    },
+
+    "binary_sensor.main_door_iaszone": {
+      "state": "off",
+      "attributes": {
+        "device_class": "door",
+        "friendly_name": "Main Door"
+      }
+    },
+
+    "sensor.main_door_battery": {
+      "state": "85",
+      "attributes": {
+        "unit_of_measurement": "%",
+        "device_class": "battery",
+        "friendly_name": "Main Door Battery"
+      }
+    },
+
+    "binary_sensor.lumi_lumi_sensor_wleak_aq1_iaszone": {
+      "state": "off",
+      "attributes": {
+        "device_class": "moisture",
+        "friendly_name": "Water Leak Sensor"
+      }
+    },
+
+    "sensor.lumi_lumi_sensor_wleak_aq1_device_temperature": {
+      "state": "22.5",
+      "attributes": {
+        "unit_of_measurement": "\u00b0C",
+        "device_class": "temperature",
+        "friendly_name": "Floor Temperature"
+      }
+    },
+
+    "sensor.temperature_humidity_sensor_6e74_temperature": {
+      "state": "23.8",
+      "attributes": {
+        "unit_of_measurement": "\u00b0C",
+        "device_class": "temperature",
+        "friendly_name": "Room Temperature"
+      }
+    },
+
+    "sensor.temperature_humidity_sensor_6e74_humidity": {
+      "state": "52",
+      "attributes": {
+        "unit_of_measurement": "%",
+        "device_class": "humidity",
+        "friendly_name": "Room Humidity"
+      }
+    },
+
+    "media_player.living_room_tv": {
+      "state": "playing",
+      "attributes": {
+        "friendly_name": "Living Room TV",
+        "media_title": "Documentary: Ocean Life",
+        "media_artist": "BBC Studios",
+        "media_content_type": "video",
+        "volume_level": 0.45,
+        "is_volume_muted": false,
+        "source": "Netflix"
+      }
+    },
+
+    "binary_sensor.archer_ax10_wan_status": {
+      "state": "on",
+      "attributes": {
+        "device_class": "connectivity",
+        "friendly_name": "Router WAN Status"
+      }
+    },
+
+    "sensor.archer_ax10_kib_s_received": {
+      "state": "1245.67",
+      "attributes": {
+        "unit_of_measurement": "KiB/s",
+        "friendly_name": "Download Speed"
+      }
+    },
+
+    "sensor.archer_ax10_kib_s_sent": {
+      "state": "234.12",
+      "attributes": {
+        "unit_of_measurement": "KiB/s",
+        "friendly_name": "Upload Speed"
+      }
+    },
+
+    "sensor.rss_feed_items": {
+      "state": "5",
+      "attributes": {
+        "titles": "Breaking: Major Tech Announcement Today,Scientists Discover New Species in Deep Ocean,Local Weather Alert: Storm Expected Tomorrow,Stock Markets Reach New Highs,Sports Update: Championship Finals Tonight",
+        "friendly_name": "RSS Feed Items"
+      }
+    }
+  },
+
+  "calendars": {
+    "calendar.risto_kalender": {
+      "events": [
+        {
+          "summary": "Team Standup",
+          "description": "Daily sync meeting",
+          "location": "Conference Room A",
+          "start_offset": "+0d 09:00",
+          "end_offset": "+0d 09:30"
+        },
+        {
+          "summary": "Project Review",
+          "description": "Monthly project status review",
+          "location": "Main Office",
+          "start_offset": "+0d 14:00",
+          "end_offset": "+0d 15:30"
+        },
+        {
+          "summary": "Dentist Appointment",
+          "description": "Regular checkup",
+          "location": "Downtown Dental",
+          "start_offset": "+1d 10:00",
+          "end_offset": "+1d 11:00"
+        },
+        {
+          "summary": "Weekend Hiking",
+          "description": "Group hike at the nature reserve",
+          "location": "Trailhead Parking",
+          "start_offset": "+3d",
+          "all_day": true
+        },
+        {
+          "summary": "Birthday Party",
+          "description": "Sarah's birthday celebration",
+          "location": "Home",
+          "start_offset": "+5d 18:00",
+          "end_offset": "+5d 22:00"
+        }
+      ]
+    }
+  }
+}
