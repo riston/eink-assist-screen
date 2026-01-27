@@ -1,0 +1,15 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Document icon -->
+  <path d="M 16 8 L 16 56 L 48 56 L 48 20 L 36 8 Z" fill="white" stroke="black" stroke-width="3"/>
+  <path d="M 36 8 L 36 20 L 48 20" fill="none" stroke="black" stroke-width="3" stroke-linejoin="miter"/>
+
+  <!-- Document lines -->
+  <line x1="22" y1="28" x2="42" y2="28" stroke="black" stroke-width="2"/>
+  <line x1="22" y1="34" x2="42" y2="34" stroke="black" stroke-width="2"/>
+  <line x1="22" y1="40" x2="38" y2="40" stroke="black" stroke-width="2"/>
+
+  <!-- Error X -->
+  <circle cx="32" cy="46" r="8" fill="black"/>
+  <line x1="28" y1="43" x2="36" y2="49" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="36" y1="43" x2="28" y2="49" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

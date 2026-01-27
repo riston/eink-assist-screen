@@ -251,14 +251,6 @@ All entities are optional - missing entities will hide their sections gracefully
       flex-direction: column;
     }
 
-    .column-header {
-      padding: 8px;
-      text-align: center;
-      font-weight: bold;
-      letter-spacing: 1px;
-      border-bottom: 4px solid black;
-    }
-
     .column-content {
       padding: 15px;
       flex-grow: 1;
@@ -460,7 +452,6 @@ All entities are optional - missing entities will hide their sections gracefully
     <section class="bottom-section">
 
       <div class="column">
-        <header class="column-header bg-black">CLIMATE & SENSORS</header>
         <div class="column-content">
           {{#if entities.indoor_temp}}
           <div class="data-row">
@@ -516,7 +507,6 @@ All entities are optional - missing entities will hide their sections gracefully
       <div class="vertical-divider"></div>
 
       <div class="column">
-        <header class="column-header bg-black">NEWS</header>
         <div class="column-content" style="gap: 0; font-size: 0.9rem; font-weight: 600; padding: 8px;">
           {{#if entities.rss_feed.attributes.titles}}
           {{#each (limit (shuffle (split entities.rss_feed.attributes.titles ",")) 4)}}
@@ -535,7 +525,6 @@ All entities are optional - missing entities will hide their sections gracefully
       <div class="vertical-divider"></div>
 
       <div class="column">
-        <header class="column-header bg-black">CALENDAR</header>
         <div class="column-content">
           {{#if calendars.risto_kalender}}
           {{#if calendars.risto_kalender.length}}

@@ -1,6 +1,7 @@
 // Display: 7.5inch black and white model V2 (800x480)
 
 #include <config.h>
+#include <error_icons.h>
 
 #include <WiFiMulti.h>
 #include <HTTPClient.h>
@@ -21,6 +22,39 @@ RemoteConfig config; // Global config object
 
 // Monochrome display: 1 bit per pixel, 8 pixels per byte
 const int BITMAP_SIZE = 800 * 480 / 8; // Total bytes for full screen (48000 bytes)
+
+/**
+ * Draw a scaled bitmap from PROGMEM
+ * Reads small bitmap and draws each pixel as SCALE x SCALE block
+ * Perfect for e-ink icons: store 32x32 (128 bytes), display as 64x64, 96x96, or 128x128
+ */
+void drawScaledBitmap(int16_t x, int16_t y, const uint8_t *bitmap, int16_t w, int16_t h, uint16_t color, uint8_t scale)
+{
+  int16_t byteWidth = (w + 7) / 8; // Width in bytes (rounded up)
+
+  for (int16_t row = 0; row < h; row++)
+  {
+    for (int16_t col = 0; col < w; col++)
+    {
+      // Read bit from PROGMEM bitmap
+      uint8_t byte = pgm_read_byte(bitmap + row * byteWidth + col / 8);
+      bool pixelSet = byte & (0x80 >> (col % 8));
+
+      if (pixelSet)
+      {
+        // Draw scaled pixel as a block
+        if (scale == 1)
+        {
+          display.drawPixel(x + col, y + row, color);
+        }
+        else
+        {
+          display.fillRect(x + col * scale, y + row * scale, scale, scale, color);
+        }
+      }
+    }
+  }
+}
 
 // Number of chunks to split rendering into (more chunks = smaller memory, more requests)
 const int RENDER_CHUNKS = 3;                        // Adjust this: 2, 4, 8, 10, etc.
@@ -138,7 +172,7 @@ bool loadRemoteConfig()
   return false;
 }
 
-void displayErrorScreen(const char *errorMsg, int errorCode = 0)
+void displayErrorScreen(const char *errorMsg, int errorCode = 0, const uint8_t *icon = nullptr)
 {
   display.setFullWindow();
   display.firstPage();
@@ -160,28 +194,46 @@ void displayErrorScreen(const char *errorMsg, int errorCode = 0)
     // Calculate layout from top to bottom
     int16_t currentY = 50; // Start from top with margin
 
-    // Draw warning triangle (large and bold)
-    int16_t triSize = 60;
-    int16_t triTop = currentY;
-    int16_t triBottom = currentY + triSize;
-
-    // Triangle outline (thick lines by drawing multiple times)
-    for (int offset = 0; offset < 4; offset++)
+    // Draw icon if provided, otherwise draw warning triangle
+    if (icon != nullptr)
     {
-      display.drawLine(centerX, triTop + offset, centerX - triSize + offset, triBottom, GxEPD_BLACK);
-      display.drawLine(centerX, triTop + offset, centerX + triSize - offset, triBottom, GxEPD_BLACK);
-      display.drawLine(centerX - triSize + offset, triBottom, centerX + triSize - offset, triBottom, GxEPD_BLACK);
+      // Draw scaled icon from PROGMEM
+      // Icon is stored at ICON_WIDTH x ICON_HEIGHT, displayed at ICON_SCALE times larger
+      int16_t displayWidth = ICON_WIDTH * ICON_SCALE;
+      int16_t displayHeight = ICON_HEIGHT * ICON_SCALE;
+
+      int16_t iconX = centerX - displayWidth / 2;
+      int16_t iconY = currentY;
+
+      drawScaledBitmap(iconX, iconY, icon, ICON_WIDTH, ICON_HEIGHT, GxEPD_BLACK, ICON_SCALE);
+
+      currentY = iconY + displayHeight + 30;
     }
+    else
+    {
+      // Draw warning triangle (large and bold) - fallback
+      int16_t triSize = 60;
+      int16_t triTop = currentY;
+      int16_t triBottom = currentY + triSize;
 
-    // Draw exclamation mark inside triangle (bold)
-    int16_t exclamTop = triTop + 15;
-    int16_t exclamBottom = triBottom - 20;
-    // Exclamation line (thick)
-    display.fillRect(centerX - 5, exclamTop, 10, exclamBottom - exclamTop - 15, GxEPD_BLACK);
-    // Exclamation dot (circle)
-    display.fillCircle(centerX, exclamBottom - 5, 5, GxEPD_BLACK);
+      // Triangle outline (thick lines by drawing multiple times)
+      for (int offset = 0; offset < 4; offset++)
+      {
+        display.drawLine(centerX, triTop + offset, centerX - triSize + offset, triBottom, GxEPD_BLACK);
+        display.drawLine(centerX, triTop + offset, centerX + triSize - offset, triBottom, GxEPD_BLACK);
+        display.drawLine(centerX - triSize + offset, triBottom, centerX + triSize - offset, triBottom, GxEPD_BLACK);
+      }
 
-    currentY = triBottom + 40; // Space after triangle
+      // Draw exclamation mark inside triangle (bold)
+      int16_t exclamTop = triTop + 15;
+      int16_t exclamBottom = triBottom - 20;
+      // Exclamation line (thick)
+      display.fillRect(centerX - 5, exclamTop, 10, exclamBottom - exclamTop - 15, GxEPD_BLACK);
+      // Exclamation dot (circle)
+      display.fillCircle(centerX, exclamBottom - 5, 5, GxEPD_BLACK);
+
+      currentY = triBottom + 40; // Space after triangle
+    }
 
     // Draw error title with underline using getTextBounds
     display.setFont(&FreeMonoBold24pt7b);
@@ -336,14 +388,14 @@ void displayImage()
     if (WiFi.status() != WL_CONNECTED)
     {
       Serial.println("WiFi not connected");
-      displayErrorScreen("WiFi not connected", 0);
+      displayErrorScreen("WiFi not connected", 0, ICON_WIFI_ERROR);
       return;
     }
 
     if (!http.begin(client, url))
     {
       Serial.println("http.begin() failed");
-      displayErrorScreen("Failed to connect", 0);
+      displayErrorScreen("Failed to connect", 0, ICON_SERVER_ERROR);
       return;
     }
 
@@ -405,7 +457,7 @@ void displayImage()
     {
       Serial.printf("HTTP request failed: %d\n", httpCode);
       http.end();
-      displayErrorScreen("HTTP request failed", httpCode);
+      displayErrorScreen("HTTP request failed", httpCode, ICON_HTTP_ERROR);
       return;
     }
 
