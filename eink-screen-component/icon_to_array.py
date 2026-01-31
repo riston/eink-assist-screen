@@ -60,24 +60,24 @@ def bmp_to_icon_array(filename, icon_name):
         # Extract pixel data (skip header)
         pixel_data = data[info['data_offset']:]
 
-        # Invert colors for e-ink display (BMP uses opposite polarity)
-        inverted = bytes(~b & 0xFF for b in pixel_data)
+        # No inversion - black shapes on white background
+        output_data = pixel_data
 
         # Generate C array
         print(f"const uint8_t {icon_name}[] PROGMEM = {{")
 
         # Output 12 bytes per line for readability
-        for i in range(0, len(inverted), 12):
-            chunk = inverted[i:i+12]
+        for i in range(0, len(output_data), 12):
+            chunk = output_data[i:i+12]
             line = "  " + ", ".join(f"0x{b:02x}" for b in chunk)
-            if i + 12 < len(inverted):
+            if i + 12 < len(output_data):
                 line += ","
             print(line)
 
         print("};")
         print()
-        print(f"// Array size: {len(inverted)} bytes")
-        print(f"// Memory usage: {len(inverted)} bytes in flash (PROGMEM)")
+        print(f"// Array size: {len(output_data)} bytes")
+        print(f"// Memory usage: {len(output_data)} bytes in flash (PROGMEM)")
 
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found", file=sys.stderr)

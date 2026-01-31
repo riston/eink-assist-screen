@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(chmod:*)",
-      "Bash(./svg_to_icon.sh:*)"
+      "Bash(./svg_to_icon.sh:*)",
+      "Bash(python3:*)"
     ]
   }
 }
