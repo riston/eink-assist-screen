@@ -1,3 +1,6 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
 #include <Arduino.h>
 
 // WiFi Configuration (from secrets.h)
@@ -51,6 +54,4 @@ struct RemoteConfig
 #define MAX_DISPLAY_BUFFER_SIZE 65536ul
 #define MAX_HEIGHT(EPD) (EPD::HEIGHT <= MAX_DISPLAY_BUFFER_SIZE / (EPD::WIDTH / 8) ? EPD::HEIGHT : MAX_DISPLAY_BUFFER_SIZE / (EPD::WIDTH / 8))
 
-// Display instance with Waveshare ESP32 Driver Board pins
-// CS=15, DC=27, RST=26, BUSY=25
-extern GxEPD2_BW<GxEPD2_750_GDEY075T7, MAX_HEIGHT(GxEPD2_750_GDEY075T7)> display;
+#endif

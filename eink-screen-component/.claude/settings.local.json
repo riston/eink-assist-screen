@@ -3,7 +3,8 @@
     "allow": [
       "Bash(chmod:*)",
       "Bash(./svg_to_icon.sh:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(pio run:*)"
     ]
   }
 }
