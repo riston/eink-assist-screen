@@ -18,6 +18,9 @@ namespace DisplayDriver {
     // Prepare for full window update
     void setFullWindow();
 
+    // Prepare for partial window update (only redraws specified region)
+    void setPartialWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
+
     // Begin paged drawing
     void firstPage();
 

@@ -13,6 +13,51 @@
 
 namespace UiRenderer {
 
+// Small error indicator dimensions
+constexpr int INDICATOR_SIZE = 64;  // Icon size for corner indicator (matches ICON_WIDTH/HEIGHT)
+constexpr int INDICATOR_MARGIN = 10;  // Margin from screen edge
+
+void showErrorIndicator(const uint8_t* icon) {
+    // Calculate position for top-right corner
+    int16_t iconX = DisplayDriver::width() - INDICATOR_SIZE - INDICATOR_MARGIN;
+    int16_t iconY = INDICATOR_MARGIN;
+
+    // Use partial window update for the indicator area only (faster, preserves rest of screen)
+    int16_t windowX = iconX - 2;
+    int16_t windowY = iconY - 2;
+    int16_t windowW = INDICATOR_SIZE + 4;
+    int16_t windowH = INDICATOR_SIZE + 4;
+
+    DisplayDriver::setPartialWindow(windowX, windowY, windowW, windowH);
+    DisplayDriver::firstPage();
+
+    do {
+        // Draw white background for the indicator area
+        DisplayDriver::fillRect(windowX, windowY, windowW, windowH, GxEPD_WHITE);
+
+        if (icon != nullptr) {
+            // Draw the icon at 1:1 scale (64x64 source drawn as 64x64)
+            DisplayDriver::drawScaledBitmap(iconX, iconY, icon, ICON_WIDTH, ICON_HEIGHT, GxEPD_BLACK, 1);
+        } else {
+            // Draw a simple exclamation mark in a circle as fallback
+            int16_t centerX = iconX + INDICATOR_SIZE / 2;
+            int16_t centerY = iconY + INDICATOR_SIZE / 2;
+            int16_t radius = INDICATOR_SIZE / 2 - 4;
+
+            // Draw circle outline (thicker for visibility)
+            for (int i = 0; i < 3; i++) {
+                DisplayDriver::drawCircle(centerX, centerY, radius - i, GxEPD_BLACK);
+            }
+
+            // Draw exclamation mark (scaled for 64px icon)
+            DisplayDriver::fillRect(centerX - 3, centerY - 18, 6, 24, GxEPD_BLACK);
+            DisplayDriver::fillCircle(centerX, centerY + 14, 4, GxEPD_BLACK);
+        }
+    } while (DisplayDriver::nextPage());
+
+    Serial.println("Error indicator displayed in top-right corner");
+}
+
 void showError(const char* errorMsg, int errorCode, const uint8_t* icon) {
     DisplayDriver::setFullWindow();
     DisplayDriver::firstPage();
@@ -168,7 +213,11 @@ bool showRemoteImage(AppState& state) {
         HttpConnection http;
         if (!http.begin(url, 50000)) {
             Serial.println("WiFi not connected");
-            showError("WiFi not connected", 0, ICON_WIFI_ERROR);
+            if (state.lastRenderSuccess) {
+                showErrorIndicator(ICON_WIFI_ERROR);
+            } else {
+                showError("WiFi not connected", 0, ICON_WIFI_ERROR);
+            }
             return false;
         }
 
@@ -178,7 +227,11 @@ bool showRemoteImage(AppState& state) {
         if (httpCode != 200) {
             Serial.printf("HTTP request failed: %d\n", httpCode);
             http.end();
-            showError("HTTP request failed", httpCode, ICON_HTTP_ERROR);
+            if (state.lastRenderSuccess) {
+                showErrorIndicator(ICON_HTTP_ERROR);
+            } else {
+                showError("HTTP request failed", httpCode, ICON_HTTP_ERROR);
+            }
             return false;
         }
 
@@ -188,7 +241,11 @@ bool showRemoteImage(AppState& state) {
         if (sz <= 0) {
             Serial.println("Invalid response size");
             http.end();
-            showError("Invalid response size", 0);
+            if (state.lastRenderSuccess) {
+                showErrorIndicator(ICON_HTTP_ERROR);
+            } else {
+                showError("Invalid response size", 0);
+            }
             return false;
         }
 
@@ -221,6 +278,7 @@ bool showRemoteImage(AppState& state) {
     }
 
     Serial.println("Image display complete!");
+    state.lastRenderSuccess = true;
     return true;
 }
 

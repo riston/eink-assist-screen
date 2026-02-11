@@ -16,8 +16,9 @@ struct AppState {
     WiFiMulti wifiMulti;
     uint8_t bmpBuffer[CHUNK_SIZE];
     unsigned long lastRefreshTime;
+    bool lastRenderSuccess;  // Track if previous image render was successful
 
-    AppState() : lastRefreshTime(0) {}
+    AppState() : lastRefreshTime(0), lastRenderSuccess(false) {}
 };
 
 #endif
