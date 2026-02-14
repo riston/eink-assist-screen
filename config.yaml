@@ -1,0 +1,27 @@
+name: "E-Ink Renderer"
+description: "Renders Home Assistant dashboards as e-ink optimized images"
+version: "1.0.0"
+slug: eink-renderer
+url: "https://github.com/ristonovik/eink-browser-render-addons"
+arch:
+  - amd64
+  - aarch64
+homeassistant_api: true
+ports:
+  8000/tcp: 8000
+ports_description:
+  8000/tcp: "Renderer HTTP API"
+map:
+  - data:rw
+options:
+  access_token: ""
+  home_assistant_url: "http://homeassistant:8123"
+  cache_ttl_default: 300
+  cache_max_size: 50
+  active_template: "dashboard-full.html"
+schema:
+  access_token: str
+  home_assistant_url: url
+  cache_ttl_default: int
+  cache_max_size: int
+  active_template: str

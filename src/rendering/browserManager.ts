@@ -1,4 +1,5 @@
 import puppeteer, { Browser } from "puppeteer";
+import { BROWSER_WS_ENDPOINT } from "../core/constants.js";
 
 export interface BrowserManager {
   getBrowser: () => Promise<Browser>;
@@ -7,20 +8,33 @@ export interface BrowserManager {
 
 export function createBrowserManager(): BrowserManager {
   let browserInstance: Browser | null = null;
+  let isRemote = false;
 
   return {
     getBrowser: async () => {
       if (!browserInstance || !browserInstance.connected) {
-        browserInstance = await puppeteer.launch({
-          headless: true,
-          args: ["--no-sandbox", "--disable-setuid-sandbox"],
-        });
+        if (BROWSER_WS_ENDPOINT) {
+          browserInstance = await puppeteer.connect({
+            browserWSEndpoint: BROWSER_WS_ENDPOINT,
+          });
+          isRemote = true;
+        } else {
+          browserInstance = await puppeteer.launch({
+            headless: true,
+            args: ["--no-sandbox", "--disable-setuid-sandbox"],
+          });
+          isRemote = false;
+        }
       }
       return browserInstance;
     },
     close: async () => {
       if (browserInstance) {
-        await browserInstance.close();
+        if (isRemote) {
+          browserInstance.disconnect();
+        } else {
+          await browserInstance.close();
+        }
         browserInstance = null;
       }
     },

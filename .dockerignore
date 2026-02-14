@@ -1,0 +1,12 @@
+node_modules
+dist
+.git
+.env
+.claude
+eink-screen-component
+eink-stand
+assets
+*.test.ts
+*.spec.ts
+__tests__
+*.md

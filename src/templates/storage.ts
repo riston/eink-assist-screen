@@ -2,7 +2,7 @@ import { readFile, readdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join, resolve, relative, sep, isAbsolute } from "node:path";
 
-const TEMPLATES_DIR = "./templates";
+const TEMPLATES_DIR = process.env.TEMPLATES_DIR || "./templates";
 
 /**
  * Load an HTML template from the templates directory

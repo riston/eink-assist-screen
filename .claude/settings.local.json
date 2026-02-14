@@ -24,7 +24,9 @@
       "Bash(tree:*)",
       "Bash(git mv:*)",
       "Bash(npx vitest:*)",
-      "Bash(node --version:*)"
+      "Bash(node --version:*)",
+      "Bash(git log:*)",
+      "Bash(chmod:*)"
     ],
     "deny": [],
     "ask": []

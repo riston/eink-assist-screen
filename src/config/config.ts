@@ -33,6 +33,11 @@ export async function loadConfig(): Promise<HAConfig> {
         cacheTtlDefault: options.cache_ttl_default || 300,
         cacheMaxSize: options.cache_max_size || 50,
       };
+
+      // Forward active_template to env so constants.ts picks it up
+      if (options.active_template && !process.env.ACTIVE_TEMPLATE) {
+        process.env.ACTIVE_TEMPLATE = options.active_template;
+      }
     } catch (error) {
       console.warn("Failed to load /data/options.json:", error);
     }
