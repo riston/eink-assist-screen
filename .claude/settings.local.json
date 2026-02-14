@@ -26,7 +26,11 @@
       "Bash(npx vitest:*)",
       "Bash(node --version:*)",
       "Bash(git log:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "WebFetch(domain:developers.home-assistant.io)",
+      "WebFetch(domain:github.com)",
+      "Bash(gh api:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

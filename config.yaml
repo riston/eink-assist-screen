@@ -2,10 +2,11 @@ name: "E-Ink Renderer"
 description: "Renders Home Assistant dashboards as e-ink optimized images"
 version: "1.0.0"
 slug: eink-renderer
-url: "https://github.com/ristonovik/eink-browser-render-addons"
+url: "https://github.com/riston/eink-assist-screen/tree/main/renderer"
 arch:
   - amd64
   - aarch64
+init: false
 homeassistant_api: true
 ports:
   8000/tcp: 8000

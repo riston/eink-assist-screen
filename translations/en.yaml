@@ -1,0 +1,23 @@
+configuration:
+  access_token:
+    name: Access Token
+    description: >-
+      A long-lived Home Assistant access token. Leave empty to use the
+      Supervisor-injected token.
+  home_assistant_url:
+    name: Home Assistant URL
+    description: >-
+      URL of your Home Assistant instance. The default works when running
+      as an addon.
+  cache_ttl_default:
+    name: Cache TTL (seconds)
+    description: >-
+      Default time-to-live for cached Home Assistant API responses.
+  cache_max_size:
+    name: Cache Max Size
+    description: >-
+      Maximum number of cached API responses to keep in memory.
+  active_template:
+    name: Active Template
+    description: >-
+      The HTML template file to render. Must exist in /data/templates/.
