@@ -30,7 +30,8 @@
       "WebFetch(domain:developers.home-assistant.io)",
       "WebFetch(domain:github.com)",
       "Bash(gh api:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(rsvg-convert:*)"
     ],
     "deny": [],
     "ask": []

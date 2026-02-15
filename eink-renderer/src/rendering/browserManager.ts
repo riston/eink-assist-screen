@@ -1,5 +1,4 @@
 import puppeteer, { Browser } from "puppeteer";
-import { BROWSER_WS_ENDPOINT } from "../core/constants.js";
 
 export interface BrowserManager {
   getBrowser: () => Promise<Browser>;
@@ -12,10 +11,13 @@ export function createBrowserManager(): BrowserManager {
 
   return {
     getBrowser: async () => {
+      // Read at runtime so env vars set by loadConfig() are picked up
+      const wsEndpoint = process.env.BROWSER_WS_ENDPOINT || "";
+
       if (!browserInstance || !browserInstance.connected) {
-        if (BROWSER_WS_ENDPOINT) {
+        if (wsEndpoint) {
           browserInstance = await puppeteer.connect({
-            browserWSEndpoint: BROWSER_WS_ENDPOINT,
+            browserWSEndpoint: wsEndpoint,
           });
           isRemote = true;
         } else {
