@@ -28,7 +28,7 @@ export async function loadConfig(): Promise<HAConfig> {
       const optionsContent = await readFile(optionsPath, "utf-8");
       const options = JSON.parse(optionsContent);
       config = {
-        accessToken: options.access_token || "",
+        accessToken: options.access_token || process.env.SUPERVISOR_TOKEN || process.env.HASSIO_TOKEN || "",
         homeAssistantUrl: options.home_assistant_url || "http://homeassistant:8123",
         cacheTtlDefault: options.cache_ttl_default || 300,
         cacheMaxSize: options.cache_max_size || 50,
@@ -46,7 +46,7 @@ export async function loadConfig(): Promise<HAConfig> {
   // Fallback to environment variables (useful for development)
   if (!config.accessToken) {
     config = {
-      accessToken: process.env.HA_ACCESS_TOKEN || process.env.HASSIO_TOKEN || "",
+      accessToken: process.env.HA_ACCESS_TOKEN || process.env.SUPERVISOR_TOKEN || process.env.HASSIO_TOKEN || "",
       homeAssistantUrl:
         process.env.HA_URL || process.env.HOMEASSISTANT_URL || "http://homeassistant:8123",
       cacheTtlDefault: parseInt(process.env.CACHE_TTL_DEFAULT || "300", 10),
