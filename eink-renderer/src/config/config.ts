@@ -21,15 +21,27 @@ export async function loadConfig(): Promise<HAConfig> {
 
   let config: Partial<HAConfig> = {};
 
+  // When running as an HA addon, SUPERVISOR_TOKEN is injected automatically
+  const supervisorToken = process.env.SUPERVISOR_TOKEN || process.env.HASSIO_TOKEN || "";
+  // Supervisor proxy URL for HA API (requires hassio_api: true in config.yaml)
+  const supervisorHaUrl = "http://supervisor/core";
+
   // Try to load from Home Assistant addon options file
   const optionsPath = "/data/options.json";
   if (existsSync(optionsPath)) {
     try {
       const optionsContent = await readFile(optionsPath, "utf-8");
       const options = JSON.parse(optionsContent);
+
+      const token = options.access_token || supervisorToken;
+      // Use Supervisor proxy when using the injected token, direct URL otherwise
+      const defaultUrl = token === supervisorToken && supervisorToken
+        ? supervisorHaUrl
+        : "http://homeassistant:8123";
+
       config = {
-        accessToken: options.access_token || process.env.SUPERVISOR_TOKEN || process.env.HASSIO_TOKEN || "",
-        homeAssistantUrl: options.home_assistant_url || "http://homeassistant:8123",
+        accessToken: token,
+        homeAssistantUrl: options.home_assistant_url || defaultUrl,
         cacheTtlDefault: options.cache_ttl_default || 300,
         cacheMaxSize: options.cache_max_size || 50,
       };
@@ -46,9 +58,9 @@ export async function loadConfig(): Promise<HAConfig> {
   // Fallback to environment variables (useful for development)
   if (!config.accessToken) {
     config = {
-      accessToken: process.env.HA_ACCESS_TOKEN || process.env.SUPERVISOR_TOKEN || process.env.HASSIO_TOKEN || "",
+      accessToken: process.env.HA_ACCESS_TOKEN || supervisorToken,
       homeAssistantUrl:
-        process.env.HA_URL || process.env.HOMEASSISTANT_URL || "http://homeassistant:8123",
+        process.env.HA_URL || process.env.HOMEASSISTANT_URL || (supervisorToken ? supervisorHaUrl : "http://homeassistant:8123"),
       cacheTtlDefault: parseInt(process.env.CACHE_TTL_DEFAULT || "300", 10),
       cacheMaxSize: parseInt(process.env.CACHE_MAX_SIZE || "50", 10),
     };

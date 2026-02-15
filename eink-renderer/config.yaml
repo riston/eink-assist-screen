@@ -1,6 +1,6 @@
 name: "E-Ink Renderer"
 description: "Renders Home Assistant dashboards as e-ink optimized images"
-version: "1.0.1"
+version: "1.0.2"
 slug: eink-renderer
 url: "https://github.com/riston/eink-assist-screen/tree/main/eink-renderer"
 arch:
@@ -8,6 +8,7 @@ arch:
   - aarch64
 init: false
 homeassistant_api: true
+hassio_api: true
 ports:
   8000/tcp: 8000
 ports_description:
@@ -16,13 +17,13 @@ map:
   - data:rw
 options:
   access_token: ""
-  home_assistant_url: "http://homeassistant:8123"
+  home_assistant_url: ""
   cache_ttl_default: 300
   cache_max_size: 50
   active_template: "dashboard-full.html"
 schema:
   access_token: str
-  home_assistant_url: url
+  home_assistant_url: "str?"
   cache_ttl_default: int
   cache_max_size: int
   active_template: str
