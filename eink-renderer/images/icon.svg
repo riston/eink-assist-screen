@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <!-- Subtle paper texture noise -->
+    <filter id="paper" x="0%" y="0%" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" seed="2" result="noise"/>
+      <feColorMatrix type="saturate" values="0" in="noise" result="grayNoise"/>
+      <feBlend in="SourceGraphic" in2="grayNoise" mode="multiply"/>
+    </filter>
+    <!-- Soft shadow for the display -->
+    <filter id="shadow" x="-8%" y="-8%" width="116%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#1a1a2e" flood-opacity="0.3"/>
+    </filter>
+    <!-- Rounded rect clip -->
+    <clipPath id="screenClip">
+      <rect x="40" y="44" width="176" height="168" rx="6"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="128" cy="128" r="128" fill="#f0ede6"/>
+
+  <!-- Device body -->
+  <rect x="32" y="36" width="192" height="184" rx="16" fill="#2d2d3a" filter="url(#shadow)"/>
+
+  <!-- Screen bezel -->
+  <rect x="38" y="42" width="180" height="172" rx="8" fill="#e8e4dc"/>
+
+  <!-- E-ink screen surface with paper texture -->
+  <g clip-path="url(#screenClip)" filter="url(#paper)">
+    <rect x="40" y="44" width="176" height="168" fill="#e8e4dc"/>
+
+    <!-- Dashboard layout - top status bar -->
+    <rect x="52" y="56" width="152" height="2" fill="#3a3a4a" opacity="0.15"/>
+
+    <!-- Temperature widget (left) -->
+    <rect x="52" y="68" width="68" height="56" rx="4" fill="none" stroke="#3a3a4a" stroke-width="1.5" opacity="0.6"/>
+    <!-- Thermometer icon -->
+    <line x1="72" y1="78" x2="72" y2="96" stroke="#2d2d3a" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="72" cy="100" r="6" fill="none" stroke="#2d2d3a" stroke-width="2"/>
+    <circle cx="72" cy="100" r="3" fill="#c0392b"/>
+    <!-- Temp text lines -->
+    <rect x="86" y="80" width="24" height="4" rx="2" fill="#2d2d3a" opacity="0.8"/>
+    <rect x="86" y="90" width="18" height="3" rx="1.5" fill="#2d2d3a" opacity="0.4"/>
+    <rect x="86" y="100" width="28" height="3" rx="1.5" fill="#2d2d3a" opacity="0.3"/>
+
+    <!-- Weather widget (right) -->
+    <rect x="128" y="68" width="68" height="56" rx="4" fill="none" stroke="#3a3a4a" stroke-width="1.5" opacity="0.6"/>
+    <!-- Sun icon -->
+    <circle cx="150" cy="88" r="8" fill="none" stroke="#2d2d3a" stroke-width="2"/>
+    <circle cx="150" cy="88" r="4" fill="#2d2d3a" opacity="0.3"/>
+    <!-- Sun rays -->
+    <line x1="150" y1="76" x2="150" y2="79" stroke="#2d2d3a" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="150" y1="97" x2="150" y2="100" stroke="#2d2d3a" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="138" y1="88" x2="141" y2="88" stroke="#2d2d3a" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="159" y1="88" x2="162" y2="88" stroke="#2d2d3a" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Weather text -->
+    <rect x="170" y="82" width="20" height="4" rx="2" fill="#2d2d3a" opacity="0.8"/>
+    <rect x="170" y="92" width="16" height="3" rx="1.5" fill="#2d2d3a" opacity="0.4"/>
+
+    <!-- Graph/chart widget (bottom left) -->
+    <rect x="52" y="132" width="68" height="56" rx="4" fill="none" stroke="#3a3a4a" stroke-width="1.5" opacity="0.6"/>
+    <!-- Mini bar chart -->
+    <rect x="60" y="164" width="6" height="14" rx="1" fill="#2d2d3a" opacity="0.5"/>
+    <rect x="70" y="158" width="6" height="20" rx="1" fill="#2d2d3a" opacity="0.7"/>
+    <rect x="80" y="162" width="6" height="16" rx="1" fill="#2d2d3a" opacity="0.5"/>
+    <rect x="90" y="154" width="6" height="24" rx="1" fill="#2d2d3a" opacity="0.8"/>
+    <rect x="100" y="160" width="6" height="18" rx="1" fill="#2d2d3a" opacity="0.6"/>
+    <!-- Chart label -->
+    <rect x="60" y="142" width="32" height="3" rx="1.5" fill="#2d2d3a" opacity="0.4"/>
+
+    <!-- Status widget (bottom right) -->
+    <rect x="128" y="132" width="68" height="56" rx="4" fill="none" stroke="#3a3a4a" stroke-width="1.5" opacity="0.6"/>
+    <!-- Status dots -->
+    <circle cx="144" cy="150" r="4" fill="#27ae60" opacity="0.7"/>
+    <rect x="154" y="148" width="32" height="3" rx="1.5" fill="#2d2d3a" opacity="0.5"/>
+    <circle cx="144" cy="162" r="4" fill="#27ae60" opacity="0.7"/>
+    <rect x="154" y="160" width="28" height="3" rx="1.5" fill="#2d2d3a" opacity="0.5"/>
+    <circle cx="144" cy="174" r="4" fill="#3a3a4a" opacity="0.3"/>
+    <rect x="154" y="172" width="24" height="3" rx="1.5" fill="#2d2d3a" opacity="0.3"/>
+  </g>
+
+  <!-- Subtle screen edge highlight -->
+  <rect x="40" y="44" width="176" height="168" rx="6" fill="none" stroke="#ffffff" stroke-width="0.5" opacity="0.4"/>
+
+  <!-- Device bottom indicator LED -->
+  <circle cx="128" cy="228" r="2.5" fill="#27ae60" opacity="0.6"/>
+</svg>

@@ -46,9 +46,12 @@ export async function loadConfig(): Promise<HAConfig> {
         cacheMaxSize: options.cache_max_size || 50,
       };
 
-      // Forward active_template to env so constants.ts picks it up
+      // Forward options to env so constants.ts picks them up
       if (options.active_template && !process.env.ACTIVE_TEMPLATE) {
         process.env.ACTIVE_TEMPLATE = options.active_template;
+      }
+      if (options.browser_ws_endpoint && !process.env.BROWSER_WS_ENDPOINT) {
+        process.env.BROWSER_WS_ENDPOINT = options.browser_ws_endpoint;
       }
     } catch (error) {
       console.warn("Failed to load /data/options.json:", error);

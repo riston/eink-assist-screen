@@ -21,3 +21,8 @@ configuration:
     name: Active Template
     description: >-
       The HTML template file to render. Must exist in /data/templates/.
+  browser_ws_endpoint:
+    name: Browser WebSocket Endpoint
+    description: >-
+      WebSocket URL for the remote browser (e.g. browserless).
+      Example: ws://browserless:3000
