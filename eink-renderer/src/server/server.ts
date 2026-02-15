@@ -2,7 +2,7 @@ import http from "http";
 import { URL } from "url";
 
 import { createBrowserManager, createImageRequestHandler } from "../rendering/index.js";
-import { BASE_HOST, BASE_PORT, ACTIVE_TEMPLATE_ID } from "../core/constants.js";
+import { ACTIVE_TEMPLATE_ID } from "../core/constants.js";
 import { handleRender, handleEntities } from "../integrations/homeassistant/index.js";
 
 export function createServer() {
@@ -29,7 +29,7 @@ export function createServer() {
                 limit: undefined,
                 includeHeader: false,
               },
-              base_url: `http://${BASE_HOST}:${BASE_PORT}`,
+              base_url: `http://${req.headers.host}`,
             },
             display: {
               width: 800,

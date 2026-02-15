@@ -2,7 +2,7 @@
  * Application-wide constants
  */
 
-/** Base host for server binding and config generation */
+/** Base host for server binding (0.0.0.0 to accept all connections) */
 export const BASE_HOST = process.env.BASE_HOST || "localhost";
 
 /** Base port for server binding */

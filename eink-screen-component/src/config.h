@@ -8,15 +8,15 @@
 #include "secrets.h"
 
 // Default Server Configuration (can be overridden by remote config)
-#define DEFAULT_BASE_URL "http://192.168.0.113:8000"
+#define DEFAULT_BASE_URL "http://192.168.0.129:8000"
 #define CONFIG_PATH "/config"
 
 // SPI Pin Configuration (Waveshare ESP32 Driver Board defaults)
 // Modify these values if using different pins
-#define SPI_SCK  13
+#define SPI_SCK 13
 #define SPI_MISO 12
 #define SPI_MOSI 14
-#define SPI_SS   15
+#define SPI_SS 15
 
 // Remote Config Structure
 struct RemoteConfig
